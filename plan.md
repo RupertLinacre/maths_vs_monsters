@@ -19,6 +19,47 @@ A lane-based tower defence game where solving maths problems activates towers th
 - **Projectiles**: Balls that bounce/deflect off monsters, dealing damage on each hit
 - **Core mechanic**: Solve maths problems to activate towers and increase fire rate
 
+### Game Mechanics
+
+#### Difficulty Tiers
+| Tier | Colour | Monster Health | Points | Year Level Offset |
+|------|--------|----------------|--------|-------------------|
+| Easy | Green | 1 HP | 10 | Base year |
+| Medium | Orange | 2 HP | 25 | Base year + 1 |
+| Hard | Red | 3 HP | 50 | Base year + 2 |
+
+### User input
+
+- **Input box within phasar game allows maths questions to be answereed**.  The game handles working out whether the answer is correct for any of the towers and which ones
+
+#### Monsters
+- **Spawn**: From right edge, random lane, every 3 seconds (speeds up over time)
+- **Movement**: Walk left at constant speed (~50 px/sec)
+- **Damage**: Reach left edge = lose 1 life
+- **Difficulty matching**: Only damaged by projectiles of same difficulty tier.
+
+#### Towers
+- **Placement**: Click empty slot to cycle through: empty → easy → medium → hard → empty
+- **Visuals**: Maths problem displayed on top of tower
+- **Activation**: Inactive until maths problem solved; permanently active until maths problem
+- **Fire rate**: Starts at fire 1 ball per 2 seconds.  each correct answer adds +0.2x multiplier
+- **Targeting**: Fires toward right side of own lane with slight random spread
+- **Difficulty matching**: Only damages monsters of same difficulty tier.  'Bounces' off other monsters (y speed inverse)
+
+#### Projectiles
+- **Damage**: 1 HP per hit
+- **Bouncing**: Elastic bounce off monsters and screen edges
+- **Lifespan**: Destroyed after 5 bounces or leaving screen
+- **Multi-hit**: Can damage multiple monsters in one flight (same difficulty only)
+
+#### Scoring
+- **Kill points**: Easy=10, Medium=25, Hard=50
+- **Multi-hit bonus**: 2x points for each monster killed by same projectile after the first
+
+#### Player State
+- **Lives**: Start with 10; lose 1 when monster reaches left edge
+- **Game over**: Lives reach 0
+
 ## Project Structure
 
 ```
