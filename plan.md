@@ -28,7 +28,7 @@ A lane-based tower defence game where solving maths problems activates towers th
 | Medium | Orange | 2 HP | 25 | Base year + 1 |
 | Hard | Red | 3 HP | 50 | Base year + 2 |
 
-### User input
+#### User input
 
 - **Input box within phasar game allows maths questions to be answereed**.  The game handles working out whether the answer is correct for any of the towers and which ones
 
@@ -85,7 +85,7 @@ maths_vs_monsters/
 │   │   └── TowerManager.js     # Tower placement & shooting
 │   └── ui/
 │       ├── HUD.js              # Score, lives display
-│       └── QuestionModal.js    # Maths problem input overlay
+│       └── InputBox.js         # Persistent answer input field
 └── public/
     └── (placeholder for future assets)
 ```
@@ -250,9 +250,10 @@ maths_vs_monsters/
    - Use `'pixel'` texture with `setTint()` and `setDisplaySize(48, 48)`
    - Towers are static bodies (don't move)
 2. Add properties: `difficulty`, `lane`, `slotIndex`, `isActive`
-3. In GameScene, place one tower in slot position
+3. Add Phaser Text object as child to display maths problem on tower
+4. In GameScene, place one tower in slot position
 
-**Verify**: Coloured square visible at a tower slot (will look like circle with sprites later)
+**Verify**: Coloured square visible at a tower slot with problem text (e.g., "3+2") displayed on it
 
 ---
 
@@ -337,10 +338,12 @@ maths_vs_monsters/
 
 **Actions**:
 1. Add `difficulty` to Projectile (inherited from firing tower)
-2. In collision callback, only deal damage if `projectile.difficulty === monster.difficulty`
-3. Ball still bounces off non-matching monsters (no damage)
+2. In collision callback:
+   - If `projectile.difficulty === monster.difficulty`: deal damage, normal elastic bounce
+   - If difficulties don't match: no damage, invert y-velocity only (ball deflects vertically)
+3. This creates interesting gameplay where balls can bounce between lanes
 
-**Verify**: Green balls damage only green monsters
+**Verify**: Green balls damage green monsters; bounce vertically off orange/red monsters without damage
 
 ---
 
@@ -373,28 +376,38 @@ maths_vs_monsters/
 
 ### Phase 7: Maths Integration
 
-#### Step 7.1: Question modal UI
-**Goal**: Clicking tower shows maths problem
+#### Step 7.1: Persistent input box UI
+**Goal**: Single input field always visible for answering any tower's problem
 
 **Actions**:
-1. Create `src/ui/QuestionModal.js` as HTML overlay (not Phaser DOM—simpler)
-2. Add `<div id="question-modal">` to index.html with input field
-3. On tower click, show modal with `tower.problem.expression`
-4. Pause physics while modal open
+1. Create `src/ui/InputBox.js` as a Phaser game object (NOT HTML `<input>`)
+   - Use Phaser's `this.input.keyboard.on('keydown', ...)` to capture keystrokes
+   - Draw input box background using Phaser Graphics
+   - Display typed text using Phaser Text object
+   - Handle backspace, enter (submit), and number keys
+2. Position input box at bottom of screen (always visible during gameplay)
+3. Show current typed value and a visual "submit" indicator
+4. Game does NOT pause while typing—action continues
+5. All input stays within the canvas, avoiding HTML focus issues
 
-**Verify**: Clicking tower shows problem like "7 + 5 = ?"
+**Verify**: Input box visible at bottom of game screen, typing numbers shows in-game text, Enter submits
 
 ---
 
-#### Step 7.2: Answer validation
-**Goal**: Correct answer activates tower
+#### Step 7.2: Answer validation across all towers
+**Goal**: Submitting answer checks against ALL tower problems
 
 **Actions**:
-1. On form submit, use `checkAnswer(tower.problem, userInput)`
-2. If correct: set `tower.isActive = true`, hide modal, assign new problem
-3. If wrong: shake input, clear it, keep modal open
+1. On form submit, iterate through all placed towers
+2. For each tower, use `checkAnswer(tower.problem, userInput)`
+3. If answer matches any tower:
+   - Activate that tower (set `isActive = true`)
+   - Assign new problem to that tower
+   - Visual feedback (tower pulses, problem text updates)
+4. If answer matches multiple towers, activate all of them
+5. If no match: brief shake/flash on input, clear it
 
-**Verify**: Correct answer closes modal; tower starts firing
+**Verify**: Typing "12" activates any tower showing "7+5" or "3×4" etc.
 
 ---
 
@@ -403,22 +416,12 @@ maths_vs_monsters/
 
 **Actions**:
 1. Add `fireRateMultiplier` to Tower (starts at 1)
-2. Each correct answer increases multiplier by 0.2 (cap at 3x)
+2. Each correct answer increases multiplier by 0.2 (no cap, or high cap like 5x)
 3. Cooldown = baseCooldown / fireRateMultiplier
+4. Tower remains permanently active once first problem solved
+5. Problem text on tower always shows current problem for further boosts
 
-**Verify**: Repeatedly solving problems makes tower fire faster
-
----
-
-#### Step 7.4: Tower deactivation timer
-**Goal**: Towers require re-solving after time
-
-**Actions**:
-1. Add `activeTimer` to Tower (e.g., 15 seconds)
-2. Decrement in update; when 0, set `isActive = false`
-3. Tower shows visual indicator (e.g., dimmed colour) when inactive
-
-**Verify**: Tower stops firing after 15 seconds until problem re-solved
+**Verify**: Repeatedly solving problems makes tower fire faster; tower never deactivates
 
 ---
 
@@ -462,16 +465,21 @@ maths_vs_monsters/
 
 ### Phase 9: Menus and Flow
 
-#### Step 9.1: Menu scene
+#### Step 9.1: Menu scene with HTML difficulty selector
 **Goal**: Start screen with year level selection
 
 **Actions**:
 1. Create `src/scenes/MenuScene.js`
-2. Display game title
-3. Show buttons for year levels (Reception through Year 6)
-4. On selection, store choice and start GameScene
+2. Display game title using Phaser Text
+3. Add HTML `<select>` dropdown above the canvas for year level selection:
+   - Options: Reception, Year 1, Year 2, Year 3, Year 4, Year 5, Year 6
+   - This is the ONLY HTML input element in the game
+   - Position it above/outside the canvas to avoid focus conflicts during gameplay
+4. Add Phaser "Start Game" button (in-canvas)
+5. On start, read selected year level, store in game registry, start GameScene
+6. Hide the HTML dropdown when game starts
 
-**Verify**: Can select year level and start game
+**Verify**: Can select year level from dropdown and start game
 
 ---
 
@@ -566,7 +574,9 @@ maths_vs_monsters/
 | Lane system | Fixed lanes (PvZ style) | Simpler than free-form TD paths |
 | Tower slots | Fixed grid positions | Faster to implement than drag-drop placement |
 | Ball behaviour | Multi-hit, 5 bounce limit | Fun and rewards good positioning |
-| Tower activation | Time-limited (15s) | Keeps player engaged solving problems |
+| Tower activation | Permanent once solved | Simpler; engagement via fire rate boosts |
+| Answer input | Single persistent box | Faster gameplay; matches any tower's problem |
+| Non-matching bounce | Y-velocity inversion | Balls can travel between lanes for combos |
 | Build tool | Vite | Fast dev server, simple config |
 
 ---
