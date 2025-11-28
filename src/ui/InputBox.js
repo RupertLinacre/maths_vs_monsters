@@ -52,6 +52,9 @@ export default class InputBox extends Phaser.GameObjects.Container {
 
     setupKeyboardInput() {
         this.scene.input.keyboard.on('keydown', (event) => {
+            // Prevent event from bubbling to prevent page scrolling etc
+            event.stopPropagation();
+
             // Handle number keys (both regular and numpad)
             if ((event.keyCode >= 48 && event.keyCode <= 57) || // 0-9
                 (event.keyCode >= 96 && event.keyCode <= 105)) { // Numpad 0-9
@@ -60,6 +63,7 @@ export default class InputBox extends Phaser.GameObjects.Container {
                     this.currentValue += num.toString();
                     this.updateDisplay();
                 }
+                return;
             }
 
             // Handle minus sign
@@ -68,6 +72,7 @@ export default class InputBox extends Phaser.GameObjects.Container {
                     this.currentValue = '-';
                     this.updateDisplay();
                 }
+                return;
             }
 
             // Handle decimal point
@@ -76,17 +81,20 @@ export default class InputBox extends Phaser.GameObjects.Container {
                     this.currentValue += '.';
                     this.updateDisplay();
                 }
+                return;
             }
 
             // Handle backspace
             if (event.keyCode === 8) {
                 this.currentValue = this.currentValue.slice(0, -1);
                 this.updateDisplay();
+                return;
             }
 
             // Handle enter/return
             if (event.keyCode === 13) {
                 this.submit();
+                return;
             }
         });
     }

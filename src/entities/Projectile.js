@@ -30,6 +30,8 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     }
 
     onBounce() {
+        if (!this.active) return; // Already destroyed
+
         this.bounceCount++;
         if (this.bounceCount >= this.maxBounces) {
             this.destroy();
@@ -40,7 +42,7 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         super.preUpdate(time, delta);
 
         // Destroy if off-screen (shouldn't happen with world bounds, but safety check)
-        if (this.x < -50 || this.x > 850 || this.y < -50 || this.y > 650) {
+        if (this.active && (this.x < -50 || this.x > 850 || this.y < -50 || this.y > 650)) {
             this.destroy();
         }
     }

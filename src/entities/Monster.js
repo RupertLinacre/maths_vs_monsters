@@ -52,6 +52,9 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
     }
 
     updateHealthBar() {
+        // Safety check
+        if (!this.healthBarBg || !this.healthBarFg) return;
+
         const healthPercent = this.health / this.maxHealth;
         const barWidth = MONSTER.size * healthPercent;
         const barY = -MONSTER.size / 2 - 8;
@@ -76,7 +79,9 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
 
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
-        this.updateHealthBar();
+        if (this.active) {
+            this.updateHealthBar();
+        }
     }
 
     takeDamage(amount) {

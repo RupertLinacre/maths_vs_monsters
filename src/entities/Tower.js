@@ -58,7 +58,7 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
     }
 
     canFire() {
-        return this.isActive && this.cooldown <= 0;
+        return this.active && this.isActive && this.cooldown <= 0;
     }
 
     resetCooldown() {
@@ -66,7 +66,10 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
     }
 
     destroy() {
-        if (this.problemText) this.problemText.destroy();
+        if (this.problemText) {
+            this.problemText.destroy();
+            this.problemText = null;
+        }
         super.destroy();
     }
 }

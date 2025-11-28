@@ -65,12 +65,28 @@ export default class MathsManager {
     }
 
     checkAnswer(problem, userAnswer) {
+        // Safety checks
+        if (!problem) {
+            console.warn('checkAnswer called with null problem');
+            return false;
+        }
+
+        if (userAnswer === null || userAnswer === undefined || userAnswer === '') {
+            return false;
+        }
+
         try {
-            return checkAnswer(problem, userAnswer);
+            const result = checkAnswer(problem, userAnswer);
+            return result === true;
         } catch (e) {
+            console.warn('checkAnswer failed, using fallback comparison', e);
             // Fallback check
-            const numAnswer = parseFloat(userAnswer);
-            return numAnswer === problem.answer;
+            try {
+                const numAnswer = parseFloat(userAnswer);
+                return !isNaN(numAnswer) && numAnswer === problem.answer;
+            } catch (e2) {
+                return false;
+            }
         }
     }
 }

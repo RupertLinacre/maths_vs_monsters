@@ -30,14 +30,14 @@ export default class GameScene extends Phaser.Scene {
         // Draw lane grid
         this.drawLaneGrid();
 
-        // Create monsters group
-        this.monsters = this.add.group();
+        // Create monsters group - use runChildUpdate to ensure preUpdate calls work
+        this.monsters = this.add.group({ runChildUpdate: true });
 
         // Create towers group
         this.towers = this.add.group();
 
-        // Create projectiles group
-        this.projectiles = this.physics.add.group();
+        // Create projectiles group - use runChildUpdate for preUpdate calls
+        this.projectiles = this.add.group({ runChildUpdate: true });
 
         // Track tower slots: slots[laneIndex][slotIndex] = tower or null
         this.slots = [];
@@ -149,27 +149,32 @@ export default class GameScene extends Phaser.Scene {
 
     update(time, delta) {
         // Update tower cooldowns and fire
-        this.towers.getChildren().forEach(tower => {
-            tower.updateCooldown(delta);
+        const towers = this.towers.getChildren().slice(); // Copy to avoid issues
+        for (const tower of towers) {
+            if (tower && tower.active) {
+                tower.updateCooldown(delta);
 
-            if (tower.canFire()) {
-                this.fireTower(tower);
-                tower.resetCooldown();
+                if (tower.canFire()) {
+                    this.fireTower(tower);
+                    tower.resetCooldown();
+                }
             }
-        });
+        }
 
         // Check if any monster reached the left edge
-        this.monsters.getChildren().forEach(monster => {
-            if (monster.x < 0) {
+        const monsters = this.monsters.getChildren().slice(); // Copy to avoid issues
+        for (const monster of monsters) {
+            if (monster && monster.active && monster.x < 0) {
                 this.lives--;
                 monster.destroy();
 
                 // Check for game over
                 if (this.lives <= 0) {
                     this.gameOver();
+                    return; // Exit early if game over
                 }
             }
-        });
+        }
 
         // Update HUD
         this.hud.update(this.score, this.lives);
@@ -193,66 +198,114 @@ export default class GameScene extends Phaser.Scene {
         const velocityX = 300;
         const velocityY = Phaser.Math.Between(-30, 30); // Random spread
 
-        const projectile = new Projectile(
-            this,
-            tower.x + 30, // Start slightly to the right of tower
-            tower.y,
-            tower.difficulty,
-            velocityX,
-            velocityY
-        );
-        this.projectiles.add(projectile);
+        try {
+            const projectile = new Projectile(
+                this,
+                tower.x + 30, // Start slightly to the right of tower
+                tower.y,
+                tower.difficulty,
+                velocityX,
+                velocityY
+            );
+            this.projectiles.add(projectile);
+        } catch (e) {
+            console.error('Error creating projectile:', e);
+        }
     }
 
     handleProjectileMonsterCollision(projectile, monster) {
-        // Check if difficulties match
-        if (projectile.difficulty === monster.difficulty) {
-            // Same difficulty: deal damage, normal elastic bounce (handled by physics)
-            const died = monster.takeDamage(1);
-            projectile.onBounce();
-
-            // Award points if monster died
-            if (died) {
-                this.score += POINTS[monster.difficulty];
+        try {
+            // Safety check - ensure both objects are still valid and have expected methods
+            if (!projectile || !projectile.active || !projectile.body) {
+                console.log('Projectile invalid or inactive');
+                return;
             }
-        } else {
-            // Different difficulty: no damage, invert y-velocity only (deflect vertically)
-            projectile.body.velocity.y *= -1;
-            projectile.onBounce();
+            if (!monster || !monster.active) {
+                console.log('Monster invalid or inactive');
+                return;
+            }
+
+            // Verify the objects are actual instances of our classes
+            if (typeof projectile.onBounce !== 'function') {
+                console.error('projectile.onBounce is not a function. projectile:', projectile);
+                console.error('projectile constructor:', projectile.constructor?.name);
+                return;
+            }
+            if (typeof monster.takeDamage !== 'function') {
+                console.error('monster.takeDamage is not a function. monster:', monster);
+                return;
+            }
+
+            // Check if difficulties match
+            if (projectile.difficulty === monster.difficulty) {
+                // Same difficulty: deal damage, normal elastic bounce (handled by physics)
+                const died = monster.takeDamage(1);
+                projectile.onBounce();
+
+                // Award points if monster died
+                if (died) {
+                    this.score += POINTS[monster.difficulty];
+                }
+            } else {
+                // Different difficulty: no damage, invert y-velocity only (deflect vertically)
+                if (projectile.body) {
+                    projectile.body.velocity.y *= -1;
+                }
+                projectile.onBounce();
+            }
+        } catch (e) {
+            console.error('Error in handleProjectileMonsterCollision:', e);
         }
     }
 
     handleAnswerSubmit(answer) {
+        console.log('Answer submitted:', answer);
         let anyCorrect = false;
 
         // Check answer against all towers
-        this.towers.getChildren().forEach(tower => {
-            if (tower.problem && this.mathsManager.checkAnswer(tower.problem, answer)) {
-                anyCorrect = true;
+        const towers = this.towers.getChildren().slice(); // Copy array to avoid mutation issues
+        console.log('Checking against', towers.length, 'towers');
 
-                // Activate tower if not already active
-                if (!tower.isActive) {
-                    tower.activate();
+        for (const tower of towers) {
+            try {
+                if (tower.problem) {
+                    console.log('Checking tower problem:', tower.problem.expression, 'answer:', tower.problem.answer);
+                    const isCorrect = this.mathsManager.checkAnswer(tower.problem, answer);
+                    console.log('Is correct:', isCorrect);
+
+                    if (isCorrect) {
+                        anyCorrect = true;
+
+                        // Activate tower if not already active
+                        if (!tower.isActive) {
+                            console.log('Activating tower');
+                            tower.activate();
+                        }
+
+                        // Increase fire rate
+                        tower.increaseFireRate();
+
+                        // Assign new problem
+                        const newProblem = this.mathsManager.generateProblemForDifficulty(tower.difficulty);
+                        tower.setProblem(newProblem);
+                        console.log('New problem assigned:', newProblem.expression);
+
+                        // Visual feedback - pulse effect on the problem text instead
+                        this.tweens.add({
+                            targets: tower.problemText,
+                            scaleX: 1.3,
+                            scaleY: 1.3,
+                            duration: 100,
+                            yoyo: true
+                        });
+                    }
                 }
-
-                // Increase fire rate
-                tower.increaseFireRate();
-
-                // Assign new problem
-                const newProblem = this.mathsManager.generateProblemForDifficulty(tower.difficulty);
-                tower.setProblem(newProblem);
-
-                // Visual feedback - pulse effect
-                this.tweens.add({
-                    targets: tower,
-                    scaleX: 1.2,
-                    scaleY: 1.2,
-                    duration: 100,
-                    yoyo: true
-                });
+            } catch (e) {
+                console.error('Error checking answer:', e);
             }
-        });
+        }
 
+        console.log('Any correct:', anyCorrect);
         // Flash input box
         this.inputBox.flash(anyCorrect);
     }
