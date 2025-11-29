@@ -1,10 +1,12 @@
 // Canvas dimensions
 export const CANVAS_WIDTH = 1600;
-export const CANVAS_HEIGHT = 600;
+export const GAME_AREA_HEIGHT = 600;  // Height of the playable game area (where projectiles bounce)
+export const INPUT_AREA_HEIGHT = 80;  // Height reserved for input box below game area
+export const CANVAS_HEIGHT = GAME_AREA_HEIGHT + INPUT_AREA_HEIGHT;  // Total canvas height
 
-// Lane configuration - 5 lanes evenly distributed
+// Lane configuration - 5 lanes evenly distributed within game area
 const LANE_COUNT = 5;
-const LANE_HEIGHT = CANVAS_HEIGHT / LANE_COUNT;
+const LANE_HEIGHT = GAME_AREA_HEIGHT / LANE_COUNT;
 export const LANES = Array.from({ length: LANE_COUNT }, (_, i) =>
     LANE_HEIGHT * i + LANE_HEIGHT / 2
 );

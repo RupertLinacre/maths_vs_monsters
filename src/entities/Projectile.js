@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PROJECTILE, COLORS, CANVAS_WIDTH, CANVAS_HEIGHT } from '../config.js';
+import { PROJECTILE, COLORS, CANVAS_WIDTH, GAME_AREA_HEIGHT } from '../config.js';
 
 export default class Projectile extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, difficulty = 'easy', velocityX = 300, velocityY = 0) {
@@ -46,15 +46,15 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
 
         const radius = PROJECTILE.size / 2;
 
-        // Manual top/bottom boundary bouncing
+        // Manual top/bottom boundary bouncing (within game area only)
         if (this.y - radius <= 0) {
             // Hit top edge
             this.y = radius;
             this.body.velocity.y = Math.abs(this.body.velocity.y);
             this.onBounce();
-        } else if (this.y + radius >= CANVAS_HEIGHT) {
-            // Hit bottom edge
-            this.y = CANVAS_HEIGHT - radius;
+        } else if (this.y + radius >= GAME_AREA_HEIGHT) {
+            // Hit bottom edge of game area (not full canvas)
+            this.y = GAME_AREA_HEIGHT - radius;
             this.body.velocity.y = -Math.abs(this.body.velocity.y);
             this.onBounce();
         }

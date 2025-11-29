@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS } from '../config.js';
 import Monster from '../entities/Monster.js';
 import Tower from '../entities/Tower.js';
 import TowerSlot from '../entities/TowerSlot.js';
@@ -59,8 +59,8 @@ export default class GameScene extends Phaser.Scene {
         // Create wave manager to spawn monsters
         this.waveManager = new WaveManager(this);
 
-        // Set up world bounds (used for reference, projectiles handle their own bouncing)
-        this.physics.world.setBounds(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        // Set up world bounds to game area only (projectiles handle their own bouncing)
+        this.physics.world.setBounds(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT);
 
         // Register the collision handler - works with standard groups as long as children have physics bodies
         // The engine handles spatial optimization (QuadTree) and proper bounce/separation
@@ -72,8 +72,8 @@ export default class GameScene extends Phaser.Scene {
             this
         );
 
-        // Create input box at bottom of screen
-        this.inputBox = new InputBox(this, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 40);
+        // Create input box in the input area below the game area
+        this.inputBox = new InputBox(this, CANVAS_WIDTH / 2, GAME_AREA_HEIGHT + INPUT_AREA_HEIGHT / 2);
 
         // Listen for answer submissions
         this.events.on('answerSubmitted', this.handleAnswerSubmit, this);
@@ -109,9 +109,9 @@ export default class GameScene extends Phaser.Scene {
     drawLaneGrid() {
         const graphics = this.add.graphics();
 
-        // Draw horizontal lane divider lines
+        // Draw horizontal lane divider lines within game area
         graphics.lineStyle(2, 0x333355, 0.5);
-        const laneHeight = CANVAS_HEIGHT / LANES.length;
+        const laneHeight = GAME_AREA_HEIGHT / LANES.length;
 
         for (let i = 1; i < LANES.length; i++) {
             const y = i * laneHeight;
@@ -121,6 +121,12 @@ export default class GameScene extends Phaser.Scene {
             graphics.strokePath();
         }
 
+        // Draw a separator line between game area and input area
+        graphics.lineStyle(2, 0x4466aa, 0.8);
+        graphics.beginPath();
+        graphics.moveTo(0, GAME_AREA_HEIGHT);
+        graphics.lineTo(CANVAS_WIDTH, GAME_AREA_HEIGHT);
+        graphics.strokePath();
     }
 
     update(time, delta) {
