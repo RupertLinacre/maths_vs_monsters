@@ -11,13 +11,19 @@ export const LANES = Array.from({ length: LANE_COUNT }, (_, i) =>
     LANE_HEIGHT * i + LANE_HEIGHT / 2
 );
 
-// Tower slot positions - 4 slots per lane on the left side
-const SLOT_COUNT = 4;
+// Tower slot positions - 5 slots per lane on the left side
+const SLOT_COUNT = 5;
 const SLOT_START_X = 80;
 const SLOT_SPACING = 100;
 export const TOWER_SLOTS_X = Array.from({ length: SLOT_COUNT }, (_, i) =>
     SLOT_START_X + i * SLOT_SPACING
 );
+
+// Tower column progression - columns unlock as waves progress
+export const TOWER_PROGRESSION = {
+    wavesPerColumn: 3,    // How many waves before another column appears
+    maxColumns: 5         // Maximum number of tower columns (capped at SLOT_COUNT)
+};
 
 // Colors for difficulty tiers (hex values for Phaser)
 export const COLORS = {

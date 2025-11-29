@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION } from '../config.js';
 import Monster from '../entities/Monster.js';
 import Tower from '../entities/Tower.js';
 import TowerSlot from '../entities/TowerSlot.js';
@@ -18,6 +18,9 @@ export default class GameScene extends Phaser.Scene {
         // Initialize game state
         this.lives = GAME.startLives;
         this.score = 0;
+
+        // Track visible tower columns (starts with 1 column)
+        this.visibleColumns = 1;
 
         // Set dark blue background
         this.cameras.main.setBackgroundColor('#1a1a2e');
@@ -59,6 +62,9 @@ export default class GameScene extends Phaser.Scene {
         // Create wave manager to spawn monsters
         this.waveManager = new WaveManager(this);
 
+        // Listen for wave changes to reveal new tower columns
+        this.events.on('waveChanged', this.onWaveChanged, this);
+
         // Set up world bounds to game area only (projectiles handle their own bouncing)
         this.physics.world.setBounds(0, 0, CANVAS_WIDTH, GAME_AREA_HEIGHT);
 
@@ -85,7 +91,7 @@ export default class GameScene extends Phaser.Scene {
     createTowerSlots() {
         // Assign difficulties to slots in a pattern
         // Each lane has: easy, medium, hard, easy (or similar pattern)
-        const slotDifficulties = ['easy', 'medium', 'hard', 'easy'];
+        const slotDifficulties = ['easy', 'medium', 'hard', 'easy', 'medium'];
 
         for (let laneIndex = 0; laneIndex < LANES.length; laneIndex++) {
             for (let slotIndex = 0; slotIndex < TOWER_SLOTS_X.length; slotIndex++) {
@@ -101,7 +107,58 @@ export default class GameScene extends Phaser.Scene {
                 const problem = this.mathsManager.generateProblemForDifficulty(difficulty);
                 towerSlot.setProblem(problem);
 
+                // Initially hide slots beyond the first column
+                if (slotIndex >= this.visibleColumns) {
+                    towerSlot.setVisible(false);
+                }
+
                 this.towerSlots[laneIndex][slotIndex] = towerSlot;
+            }
+        }
+    }
+
+    /**
+     * Calculate how many tower columns should be visible for a given wave
+     */
+    getVisibleColumnsForWave(waveNumber) {
+        const maxColumns = Math.min(TOWER_PROGRESSION.maxColumns, TOWER_SLOTS_X.length);
+        // Wave 1 = 1 column, then add one every wavesPerColumn waves
+        const columns = 1 + Math.floor((waveNumber - 1) / TOWER_PROGRESSION.wavesPerColumn);
+        return Math.min(columns, maxColumns);
+    }
+
+    /**
+     * Handle wave change event - reveal new tower columns if applicable
+     */
+    onWaveChanged(waveNumber) {
+        const newVisibleColumns = this.getVisibleColumnsForWave(waveNumber);
+
+        if (newVisibleColumns > this.visibleColumns) {
+            // Reveal newly visible columns
+            for (let col = this.visibleColumns; col < newVisibleColumns; col++) {
+                this.revealTowerColumn(col);
+            }
+            this.visibleColumns = newVisibleColumns;
+        }
+    }
+
+    /**
+     * Reveal a column of tower slots with animation
+     */
+    revealTowerColumn(columnIndex) {
+        for (let laneIndex = 0; laneIndex < LANES.length; laneIndex++) {
+            const towerSlot = this.towerSlots[laneIndex][columnIndex];
+            if (towerSlot) {
+                // Fade in with a slight delay per lane for cascading effect
+                towerSlot.setVisible(true);
+                towerSlot.setAlpha(0);
+                this.tweens.add({
+                    targets: towerSlot,
+                    alpha: 1,
+                    duration: 300,
+                    delay: laneIndex * 50,
+                    ease: 'Power2'
+                });
             }
         }
     }
@@ -243,8 +300,9 @@ export default class GameScene extends Phaser.Scene {
         let anyCorrect = false;
 
         // First, check answer against tower slots (to spawn new towers)
+        // Only check visible columns
         for (let laneIndex = 0; laneIndex < LANES.length; laneIndex++) {
-            for (let slotIndex = 0; slotIndex < TOWER_SLOTS_X.length; slotIndex++) {
+            for (let slotIndex = 0; slotIndex < this.visibleColumns; slotIndex++) {
                 const towerSlot = this.towerSlots[laneIndex][slotIndex];
 
                 if (towerSlot && towerSlot.problem) {

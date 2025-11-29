@@ -85,6 +85,9 @@ export default class WaveManager {
         // Update spawn timer
         this.spawnTimer.delay = this.spawnInterval;
 
+        // Emit wave change event for other systems to respond
+        this.scene.events.emit('waveChanged', this.waveNumber);
+
         // Show wave notification
         this.showWaveNotification();
     }
