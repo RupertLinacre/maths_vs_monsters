@@ -244,6 +244,7 @@ export default class GameScene extends Phaser.Scene {
 
                 if (tower.canFire()) {
                     tower.fire(this); // Use polymorphic fire method
+                    this.sound.play('turret_fire');
                     tower.resetCooldown();
                 }
             }

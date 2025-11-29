@@ -30,6 +30,11 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('turret_easy', 'assets/turrets/turrent_easy.png');
         this.load.image('turret_medium', 'assets/turrets/turret_medium.png');
         this.load.image('turret_hard', 'assets/turrets/turret_hard.png');
+
+        // Load sound effects
+        this.load.audio('turret_fire', 'assets/turrets/pop.mp3');
+        this.load.audio('monster_hurt', 'assets/monsters/ow_hurt.mp3');
+        this.load.audio('monster_death', 'assets/monsters/ow_death.mp3');
     }
 
     create() {

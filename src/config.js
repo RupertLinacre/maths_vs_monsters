@@ -35,7 +35,7 @@ export const COLORS = {
 // Monster settings
 export const MONSTER = {
     size: 40,
-    speed: 30,
+    speed: 25,
     health: {
         easy: 1,
         medium: 4,
@@ -62,7 +62,7 @@ export const TOWER_CONFIG = {
             projectileSpeed: 300
         },
         projectileConfig: { type: 'bullet' },
-        upgradeDuration: 60000,
+        upgradeDuration: 600000,
         // Explicit upgrade path: 1/n fire rate
         upgrades: [
             { fireRate: 1000 }, // Level 1 (1/2)
@@ -83,7 +83,7 @@ export const TOWER_CONFIG = {
             range: 1000
         },
         projectileConfig: { type: 'bullet' },
-        upgradeDuration: 30000, // 30 seconds - how long each upgrade lasts
+        upgradeDuration: 600000,
         // Explicit upgrade path: +1 projectile count per level
         upgrades: [
             { projectileCount: 4 },
@@ -101,7 +101,7 @@ export const TOWER_CONFIG = {
             range: 2000
         },
         projectileConfig: { type: 'bullet' },
-        upgradeDuration: 20000, // 20 seconds - how long each upgrade lasts
+        upgradeDuration: 600000,
         // Explicit upgrade path: Increase Damage AND Speed simultaneously
         upgrades: [
             { damage: 4, projectileSpeed: 750 },
