@@ -121,14 +121,6 @@ export default class GameScene extends Phaser.Scene {
             graphics.strokePath();
         }
 
-        // Draw tower slot markers (small circles)
-        graphics.lineStyle(2, 0x555577, 0.8);
-
-        for (const laneY of LANES) {
-            for (const slotX of TOWER_SLOTS_X) {
-                graphics.strokeCircle(slotX, laneY, 24);
-            }
-        }
     }
 
     update(time, delta) {

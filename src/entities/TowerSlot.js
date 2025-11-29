@@ -17,10 +17,10 @@ export default class TowerSlot extends Phaser.GameObjects.Container {
         // Add to scene
         scene.add.existing(this);
 
-        // Create slot background circle (outline only, semi-transparent)
+        // Create colored circle outline for the slot
         this.slotBg = scene.add.graphics();
-        this.slotBg.lineStyle(3, COLORS[difficulty], 0.6);
-        this.slotBg.strokeCircle(0, 0, TOWER.size / 2 + 4);
+        this.slotBg.lineStyle(3, COLORS[difficulty], 0.8);
+        this.slotBg.strokeCircle(0, 0, TOWER.size / 2);
         this.add(this.slotBg);
 
         // Create problem text display
@@ -33,12 +33,6 @@ export default class TowerSlot extends Phaser.GameObjects.Container {
             strokeThickness: 2
         }).setOrigin(0.5);
         this.add(this.problemText);
-
-        // Difficulty indicator (small colored dot above the slot)
-        this.difficultyDot = scene.add.graphics();
-        this.difficultyDot.fillStyle(COLORS[difficulty], 1);
-        this.difficultyDot.fillCircle(0, -TOWER.size / 2 - 10, 5);
-        this.add(this.difficultyDot);
     }
 
     setProblem(problem) {
@@ -50,7 +44,6 @@ export default class TowerSlot extends Phaser.GameObjects.Container {
         // Clean up child elements
         if (this.slotBg) this.slotBg.destroy();
         if (this.problemText) this.problemText.destroy();
-        if (this.difficultyDot) this.difficultyDot.destroy();
         super.destroy();
     }
 }
