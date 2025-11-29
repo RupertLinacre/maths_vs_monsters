@@ -53,7 +53,12 @@ export const TOWER = {
 export const PROJECTILE = {
     size: 12,
     speed: 300,
-    maxBounces: 5
+    maxBounces: 5,
+    damage: {
+        easy: 1,
+        medium: 2,
+        hard: 3
+    }
 };
 
 // Game settings

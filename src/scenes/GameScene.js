@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, PROJECTILE } from '../config.js';
 import Monster from '../entities/Monster.js';
 import Tower from '../entities/Tower.js';
 import TowerSlot from '../entities/TowerSlot.js';
@@ -255,44 +255,20 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleProjectileMonsterCollision(projectile, monster) {
-        // DEBUG: Log collision
-        console.log('COLLISION!', projectile.difficulty, 'projectile hit', monster.difficulty, 'monster');
-
-        // Arcade Physics has already calculated the bounce and separation!
-        // We just need to handle the game logic.
-
         // Safety checks
         if (!projectile.active || !monster.active) return;
 
-        // Prevent multiple hits for the same projectile-monster pair (debounce)
-        if (projectile.lastHitMonster === monster) return;
-        projectile.lastHitMonster = monster;
+        // Get damage based on projectile difficulty
+        const damage = PROJECTILE.damage[projectile.difficulty] || 1;
 
-        // Clear the ref after a short time so it can hit the same monster again if it bounces back
-        this.time.delayedCall(500, () => {
-            if (projectile.active) projectile.lastHitMonster = null;
-        });
-
-        // Check difficulty logic - only matching difficulties deal damage
-        if (projectile.difficulty === monster.difficulty) {
-            // Same type: inflict damage and destroy projectile
-            const died = monster.takeDamage(1);
-            if (died) {
-                this.score += POINTS[monster.difficulty];
-            }
-            // Projectile disappears on successful hit
-            projectile.destroy();
-        } else {
-            // Different type: projectile bounces off (physics already handled)
-            // Apply knockback to slow/reverse the monster
-            const knockbackForce = 15; // Positive = pushes monster to the right
-            monster.applyKnockback(knockbackForce);
-
-            // Register the bounce for projectile lifespan
-            if (projectile.onBounce) {
-                projectile.onBounce();
-            }
+        // Deal damage to monster
+        const died = monster.takeDamage(damage);
+        if (died) {
+            this.score += POINTS[monster.difficulty];
         }
+
+        // Projectile is destroyed on hit
+        projectile.destroy();
     }
 
     handleAnswerSubmit(answer) {
