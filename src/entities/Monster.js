@@ -1,14 +1,23 @@
 import Phaser from 'phaser';
 import { MONSTER } from '../config.js';
 
+// Static counter for unique monster IDs
+let monsterIdCounter = 0;
+
 export default class Monster extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, difficulty = 'easy') {
         // Use the sprite for this difficulty level
         super(scene, x, y, `monster_${difficulty}`);
 
+        // Assign unique monster ID for targeting
+        this.monsterId = ++monsterIdCounter;
+
         this.difficulty = difficulty;
         this.maxHealth = MONSTER.health[difficulty];
         this.health = this.maxHealth;
+
+        // Effects array for future projectile types (slow, poison, etc.)
+        this.effects = [];
 
         // Add to scene and enable physics
         scene.add.existing(this);

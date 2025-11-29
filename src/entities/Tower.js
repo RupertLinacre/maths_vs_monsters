@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
-import { TOWER } from '../config.js';
+import { TOWER, TOWER_CONFIG } from '../config.js';
 
+/**
+ * Base Tower class - data-driven tower that reads from TOWER_CONFIG.
+ * Subclasses implement specific firing behaviors.
+ */
 export default class Tower extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, lane, slotIndex, difficulty = 'easy') {
         // Use the sprite for this difficulty level
@@ -10,10 +14,20 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         this.lane = lane;
         this.slotIndex = slotIndex;
         this.isActive = false;
-        this.fireRate = TOWER.baseFireRate;
-        this.fireRateMultiplier = 1;
-        this.cooldown = 0;
         this.problem = null;
+
+        // Load configuration from TOWER_CONFIG
+        this.config = TOWER_CONFIG[difficulty];
+
+        // Initialize stats from baseStats (deep copy to avoid mutation)
+        this.stats = { ...this.config.baseStats };
+
+        // Track upgrade level
+        this.upgradeLevel = 0;
+        this.maxUpgradeLevel = this.config.upgrades.length;
+
+        // Cooldown tracking
+        this.cooldown = 0;
 
         // Add to scene and enable physics
         scene.add.existing(this);
@@ -31,6 +45,16 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
             color: '#ffffff',
             align: 'center'
         }).setOrigin(0.5);
+
+        // Create upgrade level indicator
+        this.levelText = scene.add.text(x + TOWER.size / 2 - 5, y - TOWER.size / 2 + 5, '', {
+            fontSize: '10px',
+            fontFamily: 'Arial',
+            color: '#ffff00',
+            align: 'center',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
     }
 
     setProblem(problem) {
@@ -44,12 +68,72 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         this.cooldown = 0;
     }
 
-    increaseFireRate() {
-        this.fireRateMultiplier += 0.2;
+    /**
+     * Apply the next upgrade from the config's upgrade path.
+     * Merges upgrade changes into this.stats.
+     * @returns {boolean} True if upgrade was applied, false if at max level
+     */
+    applyUpgrade() {
+        if (this.upgradeLevel >= this.maxUpgradeLevel) {
+            console.log(`Tower at max upgrade level (${this.maxUpgradeLevel})`);
+            return false;
+        }
+
+        const upgradeChanges = this.config.upgrades[this.upgradeLevel];
+        Object.assign(this.stats, upgradeChanges);
+        this.upgradeLevel++;
+
+        // Update visual indicator
+        this.updateLevelIndicator();
+
+        console.log(`Tower upgraded to level ${this.upgradeLevel}:`, this.stats);
+        return true;
+    }
+
+    /**
+     * Update the level indicator text
+     */
+    updateLevelIndicator() {
+        if (this.upgradeLevel > 0) {
+            // Show stars or level number
+            this.levelText.setText('★'.repeat(Math.min(this.upgradeLevel, 5)));
+        }
+    }
+
+    /**
+     * Get merged config for creating projectiles.
+     * Combines current stats with projectile config.
+     */
+    getProjectileConfig() {
+        return {
+            ...this.config.projectileConfig,
+            damage: this.stats.damage,
+            projectileSpeed: this.stats.projectileSpeed,
+            range: this.stats.range
+        };
+    }
+
+    /**
+     * Find a target monster. Default behavior returns null (fire blindly).
+     * Subclasses like SniperTower override this for targeting.
+     * @param {Phaser.GameObjects.Group} monstersGroup - The monsters group
+     * @returns {Monster|null} Target monster or null
+     */
+    findTarget(monstersGroup) {
+        return null;
+    }
+
+    /**
+     * Fire projectiles. Subclasses implement specific behavior.
+     * @param {Phaser.Scene} scene - The game scene
+     */
+    fire(scene) {
+        // Base implementation does nothing - subclasses override
+        console.warn('Tower.fire() called on base class - should be overridden');
     }
 
     getEffectiveCooldown() {
-        return this.fireRate / this.fireRateMultiplier;
+        return this.stats.fireRate;
     }
 
     updateCooldown(delta) {
@@ -70,6 +154,10 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         if (this.problemText) {
             this.problemText.destroy();
             this.problemText = null;
+        }
+        if (this.levelText) {
+            this.levelText.destroy();
+            this.levelText = null;
         }
         super.destroy();
     }

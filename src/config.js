@@ -43,10 +43,69 @@ export const MONSTER = {
     }
 };
 
-// Tower settings
+// Tower settings (legacy - use TOWER_CONFIG for new system)
 export const TOWER = {
     size: 48,
     baseFireRate: 2000  // ms between shots
+};
+
+// Data-driven tower configuration
+// Maps difficulty -> archetype with explicit upgrade paths
+export const TOWER_CONFIG = {
+    easy: {
+        classType: 'Standard', // Maps to StandardTower class
+        name: 'Turret',
+        baseStats: {
+            damage: 1,
+            fireRate: 2000, // ms
+            range: 1000,
+            projectileSpeed: 300
+        },
+        projectileConfig: { type: 'bullet' },
+        // Explicit upgrade path: 1/n fire rate
+        upgrades: [
+            { fireRate: 1000 }, // Level 1 (1/2)
+            { fireRate: 666 },  // Level 2 (1/3)
+            { fireRate: 500 },  // Level 3 (1/4)
+            { fireRate: 400 }   // Level 4 (1/5)
+        ]
+    },
+    medium: {
+        classType: 'Spread', // Maps to SpreadTower class
+        name: 'Multi-Shot',
+        baseStats: {
+            damage: 2,
+            fireRate: 2000,
+            projectileCount: 3, // Initial spread count
+            spreadAngle: 30,
+            projectileSpeed: 300,
+            range: 1000
+        },
+        projectileConfig: { type: 'bullet' },
+        // Explicit upgrade path: +1 projectile count per level
+        upgrades: [
+            { projectileCount: 4 },
+            { projectileCount: 5 },
+            { projectileCount: 6 }
+        ]
+    },
+    hard: {
+        classType: 'Sniper', // Maps to SniperTower class
+        name: 'Sniper',
+        baseStats: {
+            damage: 3,
+            fireRate: 3000, // Slower
+            projectileSpeed: 600, // 2x speed of standard
+            range: 2000
+        },
+        projectileConfig: { type: 'bullet' },
+        // Explicit upgrade path: Increase Damage AND Speed simultaneously
+        upgrades: [
+            { damage: 4, projectileSpeed: 750 },
+            { damage: 5, projectileSpeed: 900 },
+            { damage: 6, projectileSpeed: 1050 }
+        ]
+    }
 };
 
 // Projectile settings

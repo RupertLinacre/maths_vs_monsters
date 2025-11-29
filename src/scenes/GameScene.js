@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, PROJECTILE } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION } from '../config.js';
 import Monster from '../entities/Monster.js';
-import Tower from '../entities/Tower.js';
+import { createTower } from '../entities/towers/TowerFactory.js';
 import TowerSlot from '../entities/TowerSlot.js';
-import Projectile from '../entities/Projectile.js';
 import WaveManager from '../systems/WaveManager.js';
 import MathsManager from '../systems/MathsManager.js';
 import InputBox from '../ui/InputBox.js';
@@ -194,7 +193,7 @@ export default class GameScene extends Phaser.Scene {
                 tower.updateCooldown(delta);
 
                 if (tower.canFire()) {
-                    this.fireTower(tower);
+                    tower.fire(this); // Use polymorphic fire method
                     tower.resetCooldown();
                 }
             }
@@ -234,32 +233,12 @@ export default class GameScene extends Phaser.Scene {
         this.scene.start('GameOverScene');
     }
 
-    fireTower(tower) {
-        // Fire toward right side with slight random spread
-        const velocityX = 300;
-        const velocityY = Phaser.Math.Between(-30, 30); // Random spread
-
-        try {
-            const projectile = new Projectile(
-                this,
-                tower.x + 30, // Start slightly to the right of tower
-                tower.y,
-                tower.difficulty,
-                velocityX,
-                velocityY
-            );
-            this.projectiles.add(projectile);
-        } catch (e) {
-            console.error('Error creating projectile:', e);
-        }
-    }
-
     handleProjectileMonsterCollision(projectile, monster) {
         // Safety checks
         if (!projectile.active || !monster.active) return;
 
-        // Get damage based on projectile difficulty
-        const damage = PROJECTILE.damage[projectile.difficulty] || 1;
+        // Get damage from projectile (reads from config-based damage)
+        const damage = projectile.getDamage();
 
         // Deal damage to monster
         const died = monster.takeDamage(damage);
@@ -295,8 +274,8 @@ export default class GameScene extends Phaser.Scene {
                         towerSlot.destroy();
                         this.towerSlots[laneIndex][slotIndex] = null;
 
-                        // Create the actual tower (already active)
-                        const tower = new Tower(this, x, y, laneIndex, slotIndex, difficulty);
+                        // Create the actual tower using factory (polymorphic based on difficulty)
+                        const tower = createTower(this, x, y, laneIndex, slotIndex, difficulty);
                         tower.activate(); // Tower starts active immediately
 
                         // Assign a new problem to the tower
@@ -335,8 +314,14 @@ export default class GameScene extends Phaser.Scene {
                     if (isCorrect) {
                         anyCorrect = true;
 
-                        // Increase fire rate
-                        tower.increaseFireRate();
+                        // Apply upgrade using config-driven upgrade path
+                        const upgraded = tower.applyUpgrade();
+
+                        if (upgraded) {
+                            console.log(`Tower upgraded! Level: ${tower.upgradeLevel}, Stats:`, tower.stats);
+                        } else {
+                            console.log('Tower at max level, no upgrade applied');
+                        }
 
                         // Assign new problem
                         const newProblem = this.mathsManager.generateProblemForDifficulty(tower.difficulty);
