@@ -26,6 +26,9 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         this.upgradeLevel = 0;
         this.maxUpgradeLevel = this.config.upgrades.length;
 
+        // Track upgrade expiry times - array of timestamps when each upgrade expires
+        this.upgradeTimers = [];
+
         // Cooldown tracking
         this.cooldown = 0;
 
@@ -83,11 +86,60 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         Object.assign(this.stats, upgradeChanges);
         this.upgradeLevel++;
 
+        // Track when this upgrade expires
+        const expiryTime = this.scene.time.now + this.config.upgradeDuration;
+        this.upgradeTimers.push(expiryTime);
+
         // Update visual indicator
         this.updateLevelIndicator();
 
         console.log(`Tower upgraded to level ${this.upgradeLevel}:`, this.stats);
         return true;
+    }
+
+    /**
+     * Apply a downgrade - revert to previous upgrade level.
+     * Recalculates stats from base + remaining upgrades.
+     * @returns {boolean} True if downgrade applied, false if at base level (tower should be removed)
+     */
+    applyDowngrade() {
+        if (this.upgradeLevel <= 0) {
+            // At base level - tower should be removed
+            return false;
+        }
+
+        this.upgradeLevel--;
+
+        // Recalculate stats from base + all upgrades up to current level
+        this.stats = { ...this.config.baseStats };
+        for (let i = 0; i < this.upgradeLevel; i++) {
+            Object.assign(this.stats, this.config.upgrades[i]);
+        }
+
+        // Update visual indicator
+        this.updateLevelIndicator();
+
+        console.log(`Tower downgraded to level ${this.upgradeLevel}:`, this.stats);
+        return true;
+    }
+
+    /**
+     * Check for expired upgrades and apply downgrades.
+     * @param {number} currentTime - Current game time from scene.time.now
+     * @returns {boolean} True if tower should be removed (downgraded below base level)
+     */
+    checkUpgradeExpiry(currentTime) {
+        // Process all expired timers
+        while (this.upgradeTimers.length > 0 && this.upgradeTimers[0] <= currentTime) {
+            this.upgradeTimers.shift(); // Remove expired timer
+            
+            const stillAlive = this.applyDowngrade();
+            if (!stillAlive) {
+                // Tower has no more upgrades and should be removed
+                return true; // Signal removal
+            }
+        }
+        return false; // Tower still alive
     }
 
     /**
@@ -97,6 +149,9 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         if (this.upgradeLevel > 0) {
             // Show stars or level number
             this.levelText.setText('★'.repeat(Math.min(this.upgradeLevel, 5)));
+        } else {
+            // No upgrades - clear the indicator
+            this.levelText.setText('');
         }
     }
 

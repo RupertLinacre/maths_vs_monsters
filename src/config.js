@@ -62,6 +62,7 @@ export const TOWER_CONFIG = {
             projectileSpeed: 300
         },
         projectileConfig: { type: 'bullet' },
+        upgradeDuration: 3000,
         // Explicit upgrade path: 1/n fire rate
         upgrades: [
             { fireRate: 1000 }, // Level 1 (1/2)
@@ -82,6 +83,7 @@ export const TOWER_CONFIG = {
             range: 1000
         },
         projectileConfig: { type: 'bullet' },
+        upgradeDuration: 30000, // 30 seconds - how long each upgrade lasts
         // Explicit upgrade path: +1 projectile count per level
         upgrades: [
             { projectileCount: 4 },
@@ -99,6 +101,7 @@ export const TOWER_CONFIG = {
             range: 2000
         },
         projectileConfig: { type: 'bullet' },
+        upgradeDuration: 20000, // 20 seconds - how long each upgrade lasts
         // Explicit upgrade path: Increase Damage AND Speed simultaneously
         upgrades: [
             { damage: 4, projectileSpeed: 750 },

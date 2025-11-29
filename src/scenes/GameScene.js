@@ -186,10 +186,17 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        // Update tower cooldowns and fire
+        // Update tower cooldowns, check for upgrade expiry, and fire
         const towers = this.towers.getChildren().slice();
         for (const tower of towers) {
             if (tower && tower.active) {
+                // Check for expired upgrades
+                const shouldRemove = tower.checkUpgradeExpiry(time);
+                if (shouldRemove) {
+                    this.removeTowerAndCreateSlot(tower);
+                    continue; // Skip to next tower
+                }
+
                 tower.updateCooldown(delta);
 
                 if (tower.canFire()) {
@@ -248,6 +255,33 @@ export default class GameScene extends Phaser.Scene {
 
         // Projectile is destroyed on hit
         projectile.destroy();
+    }
+
+    /**
+     * Remove a tower and recreate the tower slot at its position.
+     * Called when a tower's upgrades all expire and it downgrades below base level.
+     */
+    removeTowerAndCreateSlot(tower) {
+        const laneIndex = tower.lane;
+        const slotIndex = tower.slotIndex;
+        const difficulty = tower.difficulty;
+        const x = TOWER_SLOTS_X[slotIndex];
+        const y = LANES[laneIndex];
+
+        // Clear the slot reference
+        this.slots[laneIndex][slotIndex] = null;
+
+        // Destroy the tower
+        tower.destroy();
+
+        // Create a new tower slot with a fresh problem
+        const towerSlot = new TowerSlot(this, x, y, laneIndex, slotIndex, difficulty);
+        const problem = this.mathsManager.generateProblemForDifficulty(difficulty);
+        towerSlot.setProblem(problem);
+
+        this.towerSlots[laneIndex][slotIndex] = towerSlot;
+
+        console.log(`Tower removed at lane ${laneIndex}, slot ${slotIndex} - slot recreated`);
     }
 
     handleAnswerSubmit(answer) {
