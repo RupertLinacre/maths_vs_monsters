@@ -24,8 +24,8 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
         // Tower starts invisible until activate() is called
         this.setAlpha(1);
 
-        // Create problem text display
-        this.problemText = scene.add.text(x, y, '', {
+        // Create problem text display below the turret
+        this.problemText = scene.add.text(x, y + TOWER.size / 2 + 12, '', {
             fontSize: '14px',
             fontFamily: 'Arial',
             color: '#ffffff',
@@ -35,7 +35,7 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
 
     setProblem(problem) {
         this.problem = problem;
-        this.problemText.setText(problem.expression);
+        this.problemText.setText(problem.expression_short);
     }
 
     activate() {

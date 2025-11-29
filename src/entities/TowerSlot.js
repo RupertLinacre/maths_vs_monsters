@@ -37,7 +37,7 @@ export default class TowerSlot extends Phaser.GameObjects.Container {
 
     setProblem(problem) {
         this.problem = problem;
-        this.problemText.setText(problem.expression);
+        this.problemText.setText(problem.expression_short);
     }
 
     destroy() {
