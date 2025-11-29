@@ -1,5 +1,5 @@
 // Canvas dimensions
-export const CANVAS_WIDTH = 800;
+export const CANVAS_WIDTH = 1600;
 export const CANVAS_HEIGHT = 600;
 
 // Lane configuration - 5 lanes evenly distributed

@@ -3,11 +3,12 @@ import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: CANVAS_WIDTH,
+  height: CANVAS_HEIGHT,
   parent: 'game',
   physics: {
     default: 'arcade',
