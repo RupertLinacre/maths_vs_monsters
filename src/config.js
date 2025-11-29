@@ -38,8 +38,8 @@ export const MONSTER = {
     speed: 50,
     health: {
         easy: 1,
-        medium: 2,
-        hard: 3
+        medium: 4,
+        hard: 9
     }
 };
 
