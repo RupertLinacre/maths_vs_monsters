@@ -21,11 +21,9 @@ export default class Projectile extends Phaser.Physics.Arcade.Sprite {
         // Make it a circle for better bounce physics
         this.body.setCircle(PROJECTILE.size / 2);
 
-        // Enable world bounds collision only on top and bottom (not left/right)
-        // checkCollision: { up, down, left, right }
-        this.body.setCollideWorldBounds(true, 0, 1); // bounceX=0, bounceY=1
-        this.body.checkCollision.left = false;
-        this.body.checkCollision.right = false;
+        // Enable world bounds collision and bouncing (top/bottom only)
+        this.body.setCollideWorldBounds(true);
+        this.body.setBounce(1, 1);
         this.body.onWorldBounds = true;
 
         // Set initial velocity
