@@ -125,8 +125,23 @@ export const PROJECTILE = {
 
 // Game settings
 export const GAME = {
-    startLives: 10,
-    spawnInterval: 3000  // ms between monster spawns
+    startLives: 10
+};
+
+// Wave configuration
+export const WAVE = {
+    startingMonsters: 20,           // Number of monsters in wave 1
+    additionalMonstersPerWave: 5,   // How many more monsters each subsequent wave
+
+    // Spawn rate as percentage of total wave monsters per second
+    // e.g., 0.05 = 5% of wave spawns per second at start
+    spawnRateStart: 0.05,           // Slow spawn rate at wave start (5% per second)
+    spawnRateEnd: 0.25,             // Fast spawn rate at wave end (25% per second)
+
+    // Difficulty distribution at start of wave [easy, medium, hard]
+    difficultyStart: [0.9, 0.08, 0.02],
+    // Difficulty distribution at end of wave [easy, medium, hard]
+    difficultyEnd: [0.0, 0.5, 0.5]
 };
 
 // Scoring

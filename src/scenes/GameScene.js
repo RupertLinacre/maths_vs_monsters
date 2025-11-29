@@ -127,7 +127,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Handle wave change event - reveal new tower columns if applicable
+     * Handle wave change event - reveal new tower columns and reset towers
      */
     onWaveChanged(waveNumber) {
         const newVisibleColumns = this.getVisibleColumnsForWave(waveNumber);
@@ -139,6 +139,49 @@ export default class GameScene extends Phaser.Scene {
             }
             this.visibleColumns = newVisibleColumns;
         }
+
+        // Reset all towers to tower slots at the start of each wave
+        this.resetAllTowers();
+    }
+
+    /**
+     * Reset all existing towers back to tower slots (starting state)
+     */
+    resetAllTowers() {
+        // Get all towers and reset them
+        const towers = this.towers.getChildren().slice();
+
+        for (const tower of towers) {
+            if (tower && tower.active) {
+                const laneIndex = tower.lane;
+                const slotIndex = tower.slotIndex;
+                const difficulty = tower.difficulty;
+                const x = TOWER_SLOTS_X[slotIndex];
+                const y = LANES[laneIndex];
+
+                // Clear the slot reference
+                this.slots[laneIndex][slotIndex] = null;
+
+                // Destroy the tower
+                tower.destroy();
+
+                // Create a new tower slot with a fresh problem
+                const towerSlot = new TowerSlot(this, x, y, laneIndex, slotIndex, difficulty);
+                const problem = this.mathsManager.generateProblemForDifficulty(difficulty);
+                towerSlot.setProblem(problem);
+
+                // Only show if within visible columns
+                if (slotIndex < this.visibleColumns) {
+                    towerSlot.setVisible(true);
+                } else {
+                    towerSlot.setVisible(false);
+                }
+
+                this.towerSlots[laneIndex][slotIndex] = towerSlot;
+            }
+        }
+
+        console.log('All towers reset to tower slots for new wave');
     }
 
     /**
@@ -214,6 +257,8 @@ export default class GameScene extends Phaser.Scene {
             if (monster && monster.active && monster.x < 0) {
                 this.lives--;
                 monster.destroy();
+                // Notify wave manager that a monster was killed (escaped counts as killed for wave tracking)
+                this.waveManager.onMonsterKilled();
 
                 // Check for game over
                 if (this.lives <= 0) {
@@ -251,6 +296,8 @@ export default class GameScene extends Phaser.Scene {
         const died = monster.takeDamage(damage);
         if (died) {
             this.score += POINTS[monster.difficulty];
+            // Notify wave manager that a monster was killed
+            this.waveManager.onMonsterKilled();
         }
 
         // Projectile is destroyed on hit
