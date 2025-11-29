@@ -221,6 +221,10 @@ export default class GameScene extends Phaser.Scene {
             projectile.destroy();
         } else {
             // Different type: projectile bounces off (physics already handled)
+            // Apply knockback to slow/reverse the monster
+            const knockbackForce = 15; // Positive = pushes monster to the right
+            monster.applyKnockback(knockbackForce);
+
             // Register the bounce for projectile lifespan
             if (projectile.onBounce) {
                 projectile.onBounce();

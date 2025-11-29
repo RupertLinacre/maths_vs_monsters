@@ -99,6 +99,21 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
         return false;
     }
 
+    /**
+     * Apply knockback force when hit by mismatched projectile.
+     * Each hit reduces velocity, eventually reversing direction.
+     * @param {number} force - The knockback force to apply (positive = pushes right)
+     */
+    applyKnockback(force) {
+        if (!this.body) return;
+
+        // Get current velocity and apply knockback
+        const currentVelocityX = this.body.velocity.x;
+        const newVelocityX = currentVelocityX + force;
+
+        this.body.setVelocityX(newVelocityX);
+    }
+
     destroy() {
         // Clean up health bar graphics
         if (this.healthBarBg) this.healthBarBg.destroy();
