@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, DIFFICULTY_SETTINGS } from '../config.js';
 import { YEAR_LEVELS } from '../systems/MathsManager.js';
 
 export default class MenuScene extends Phaser.Scene {
@@ -36,6 +36,10 @@ export default class MenuScene extends Phaser.Scene {
         // Create year level buttons
         this.selectedYearIndex = 1; // Default to Year 1
         this.yearButtons = [];
+
+        // Create difficulty selection
+        this.selectedDifficultyKey = 'medium'; // Default to Medium
+        this.difficultyButtons = [];
 
         const yearLabels = ['Reception', 'Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'];
         const buttonWidth = 90;
@@ -77,8 +81,58 @@ export default class MenuScene extends Phaser.Scene {
             this.yearButtons.push(btn);
         });
 
+        // Difficulty label
+        this.add.text(CANVAS_WIDTH / 2, 370, 'Select Difficulty:', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        // Create difficulty buttons
+        const difficultyKeys = Object.keys(DIFFICULTY_SETTINGS);
+        const diffButtonWidth = 100;
+        const diffButtonSpacing = 10;
+        const diffTotalWidth = difficultyKeys.length * diffButtonWidth + (difficultyKeys.length - 1) * diffButtonSpacing;
+        const diffStartX = (CANVAS_WIDTH - diffTotalWidth) / 2 + diffButtonWidth / 2;
+
+        difficultyKeys.forEach((key, index) => {
+            const setting = DIFFICULTY_SETTINGS[key];
+            const x = diffStartX + index * (diffButtonWidth + diffButtonSpacing);
+            const y = 420;
+
+            const isSelected = key === this.selectedDifficultyKey;
+            const btn = this.add.text(x, y, setting.label, {
+                fontSize: '14px',
+                fontFamily: 'Arial',
+                color: isSelected ? '#1a1a2e' : '#ffffff',
+                backgroundColor: isSelected ? '#fbbf24' : '#333355',
+                padding: { x: 10, y: 8 }
+            }).setOrigin(0.5)
+                .setInteractive({ useHandCursor: true });
+
+            btn.difficultyKey = key;
+
+            btn.on('pointerover', () => {
+                if (key !== this.selectedDifficultyKey) {
+                    btn.setStyle({ backgroundColor: '#444466' });
+                }
+            });
+
+            btn.on('pointerout', () => {
+                if (key !== this.selectedDifficultyKey) {
+                    btn.setStyle({ backgroundColor: '#333355' });
+                }
+            });
+
+            btn.on('pointerdown', () => {
+                this.selectDifficulty(key);
+            });
+
+            this.difficultyButtons.push(btn);
+        });
+
         // Start Game button
-        const startBtn = this.add.text(CANVAS_WIDTH / 2, 420, 'START GAME', {
+        const startBtn = this.add.text(CANVAS_WIDTH / 2, 510, 'START GAME', {
             fontSize: '28px',
             fontFamily: 'Arial',
             color: '#ffffff',
@@ -100,7 +154,7 @@ export default class MenuScene extends Phaser.Scene {
         });
 
         // Instructions
-        this.add.text(CANVAS_WIDTH / 2, 520,
+        this.add.text(CANVAS_WIDTH / 2, 600,
             'Click slots to place towers • Type answers to activate • Match colors to deal damage', {
             fontSize: '14px',
             fontFamily: 'Arial',
@@ -127,9 +181,31 @@ export default class MenuScene extends Phaser.Scene {
         });
     }
 
+    selectDifficulty(key) {
+        this.selectedDifficultyKey = key;
+
+        // Update button styles
+        this.difficultyButtons.forEach((btn) => {
+            if (btn.difficultyKey === key) {
+                btn.setStyle({
+                    color: '#1a1a2e',
+                    backgroundColor: '#fbbf24'
+                });
+            } else {
+                btn.setStyle({
+                    color: '#ffffff',
+                    backgroundColor: '#333355'
+                });
+            }
+        });
+    }
+
     startGame() {
         // Store selected year level in registry
         this.registry.set('baseYearLevel', YEAR_LEVELS[this.selectedYearIndex]);
+
+        // Store selected difficulty in registry
+        this.registry.set('gameDifficulty', this.selectedDifficultyKey);
 
         // Start game scene
         this.scene.start('GameScene');

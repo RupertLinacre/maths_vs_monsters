@@ -5,7 +5,7 @@ import { MONSTER } from '../config.js';
 let monsterIdCounter = 0;
 
 export default class Monster extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, difficulty = 'easy') {
+    constructor(scene, x, y, difficulty = 'easy', speedMultiplier = 1.0) {
         // Use the sprite for this difficulty level
         super(scene, x, y, `monster_${difficulty}`);
 
@@ -15,6 +15,7 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
         this.difficulty = difficulty;
         this.maxHealth = MONSTER.health[difficulty];
         this.health = this.maxHealth;
+        this.speedMultiplier = speedMultiplier;
 
         // Effects array for future projectile types (slow, poison, etc.)
         this.effects = [];
@@ -33,8 +34,8 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
         // Body is automatically sized to texture (MONSTER.size x MONSTER.size)
         // No setSize or setOffset needed!
 
-        // Set movement - move left toward base
-        this.body.setVelocityX(-MONSTER.speed);
+        // Set movement - move left toward base (apply speed multiplier from difficulty)
+        this.body.setVelocityX(-MONSTER.speed * this.speedMultiplier);
 
         // Create health bar
         this.createHealthBar();

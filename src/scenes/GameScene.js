@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, DIFFICULTY_SETTINGS } from '../config.js';
 import Monster from '../entities/Monster.js';
 import { createTower } from '../entities/towers/TowerFactory.js';
 import TowerSlot from '../entities/TowerSlot.js';
@@ -26,6 +26,10 @@ export default class GameScene extends Phaser.Scene {
 
         // Get selected year level from registry
         const baseYearLevel = this.registry.get('baseYearLevel') || 'year1';
+
+        // Get selected difficulty from registry
+        const difficultyKey = this.registry.get('gameDifficulty') || 'medium';
+        this.difficultySettings = DIFFICULTY_SETTINGS[difficultyKey];
 
         // Create maths manager with selected year level
         this.mathsManager = new MathsManager(baseYearLevel);
@@ -58,8 +62,8 @@ export default class GameScene extends Phaser.Scene {
         // Create tower slots with maths problems (towers spawn when solved)
         this.createTowerSlots();
 
-        // Create wave manager to spawn monsters
-        this.waveManager = new WaveManager(this);
+        // Create wave manager to spawn monsters (pass difficulty settings)
+        this.waveManager = new WaveManager(this, this.difficultySettings);
 
         // Listen for wave changes to reveal new tower columns
         this.events.on('waveChanged', this.onWaveChanged, this);

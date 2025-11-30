@@ -150,3 +150,32 @@ export const POINTS = {
     medium: 25,
     hard: 50
 };
+
+// Game difficulty settings
+export const DIFFICULTY_SETTINGS = {
+    veryEasy: {
+        label: 'Very Easy',
+        waveDelay: 4000,      // 4 second delay before each wave
+        speedMultiplier: 0.5
+    },
+    easy: {
+        label: 'Easy',
+        waveDelay: 2000,      // 2 second delay before each wave
+        speedMultiplier: 0.75
+    },
+    medium: {
+        label: 'Medium',
+        waveDelay: 0,         // No delay
+        speedMultiplier: 1.0
+    },
+    hard: {
+        label: 'Hard',
+        waveDelay: 0,         // No delay
+        speedMultiplier: 1.5
+    },
+    veryHard: {
+        label: 'Very Hard',
+        waveDelay: 0,         // No delay
+        speedMultiplier: 2.0
+    }
+};

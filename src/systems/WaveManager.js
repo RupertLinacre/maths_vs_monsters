@@ -2,8 +2,9 @@ import { CANVAS_WIDTH, GAME_AREA_HEIGHT, LANES, WAVE } from '../config.js';
 import Monster from '../entities/Monster.js';
 
 export default class WaveManager {
-    constructor(scene) {
+    constructor(scene, difficultySettings = { waveDelay: 0, speedMultiplier: 1.0 }) {
         this.scene = scene;
+        this.difficultySettings = difficultySettings;
         this.waveNumber = 1;
         this.monstersSpawned = 0;
         this.monstersKilled = 0;
@@ -16,8 +17,16 @@ export default class WaveManager {
         this.spawnTimer = null;
         this.scheduleNextSpawn();
 
-        // Spawn first monster immediately
-        this.spawnRandomMonster();
+        // Start first wave with delay if configured
+        if (this.difficultySettings.waveDelay > 0) {
+            this.showWaveNotification();
+            this.scene.time.delayedCall(this.difficultySettings.waveDelay, () => {
+                this.spawnRandomMonster();
+            });
+        } else {
+            // Spawn first monster immediately
+            this.spawnRandomMonster();
+        }
     }
 
     /**
@@ -97,7 +106,8 @@ export default class WaveManager {
                 this.scene,
                 CANVAS_WIDTH + 20, // Spawn just off right edge
                 lane,
-                difficulty
+                difficulty,
+                this.difficultySettings.speedMultiplier
             );
             this.scene.monsters.add(monster);
             console.log('Monster spawned:', difficulty, 'at lane', lane, 'total monsters:', this.scene.monsters.getChildren().length);
@@ -180,8 +190,9 @@ export default class WaveManager {
         // Start spawning for new wave
         this.scheduleNextSpawn();
 
-        // Spawn first monster of new wave immediately
-        this.scene.time.delayedCall(1500, () => {
+        // Spawn first monster of new wave after delay (uses difficulty delay or 1500ms default for notification)
+        const spawnDelay = Math.max(1500, this.difficultySettings.waveDelay);
+        this.scene.time.delayedCall(spawnDelay, () => {
             this.spawnRandomMonster();
         });
     }
