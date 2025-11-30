@@ -20,12 +20,15 @@ export default class MathsManager {
     }
 
     getYearLevelForDifficulty(difficulty) {
-        let offset = 0;
-        if (difficulty === 'medium') offset = 1;
-        if (difficulty === 'hard') offset = 2;
-        if (difficulty === 'cluster') offset = 3;
+        // Offsets relative to base year:
+        // easy = base - 1, medium = base, hard = base + 1, cluster = base + 2
+        let offset = -1; // easy
+        if (difficulty === 'medium') offset = 0;
+        if (difficulty === 'hard') offset = 1;
+        if (difficulty === 'cluster') offset = 2;
 
-        const yearIndex = Math.min(this.baseYearIndex + offset, YEAR_LEVELS.length - 1);
+        // Clamp between 0 (reception) and max (year6)
+        const yearIndex = Math.max(0, Math.min(this.baseYearIndex + offset, YEAR_LEVELS.length - 1));
         return YEAR_LEVELS[yearIndex];
     }
 
