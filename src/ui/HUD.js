@@ -53,6 +53,14 @@ export default class HUD extends Phaser.GameObjects.Container {
             color: '#66ff66'
         });
         this.add(this.killsText);
+
+        // Create questions answered text
+        this.questionsText = scene.add.text(290, 35, 'Answers: 0', {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#ff99ff'
+        });
+        this.add(this.questionsText);
     }
 
     update(score, lives, waveInfo = null) {
@@ -71,6 +79,7 @@ export default class HUD extends Phaser.GameObjects.Container {
             this.waveText.setText(`Wave: ${waveInfo.wave}`);
             this.monstersText.setText(`Remaining: ${waveInfo.remaining}`);
             this.killsText.setText(`Kills: ${waveInfo.totalKills}`);
+            this.questionsText.setText(`Answers: ${waveInfo.questionsAnswered}`);
         }
     }
 }

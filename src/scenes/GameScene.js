@@ -20,6 +20,7 @@ export default class GameScene extends Phaser.Scene {
         this.lives = GAME.startLives;
         this.score = 0;
         this.totalMonstersKilled = 0;
+        this.questionsAnswered = 0;
 
         // Track visible tower columns (starts with 1 column)
         this.visibleColumns = 1;
@@ -292,7 +293,8 @@ export default class GameScene extends Phaser.Scene {
         const waveInfo = this.waveManager ? {
             wave: this.waveManager.waveNumber,
             remaining: this.waveManager.monstersPerWave - this.waveManager.monstersKilled,
-            totalKills: this.getTotalKills()
+            totalKills: this.getTotalKills(),
+            questionsAnswered: this.questionsAnswered
         } : null;
         this.hud.update(this.score, this.lives, waveInfo);
     }
@@ -556,6 +558,10 @@ export default class GameScene extends Phaser.Scene {
         }
 
         console.log('Any correct:', anyCorrect);
+        // Increment questions answered if any were correct
+        if (anyCorrect) {
+            this.questionsAnswered++;
+        }
         // Flash input box
         this.inputBox.flash(anyCorrect);
     }
