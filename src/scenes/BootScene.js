@@ -6,6 +6,16 @@ export default class BootScene extends Phaser.Scene {
         super({ key: 'BootScene' });
     }
 
+    init() {
+        // Initialize audio settings in registry (default to enabled)
+        if (this.registry.get('musicEnabled') === undefined) {
+            this.registry.set('musicEnabled', true);
+        }
+        if (this.registry.get('soundEnabled') === undefined) {
+            this.registry.set('soundEnabled', true);
+        }
+    }
+
     preload() {
         // Create a 1x1 white pixel texture for general use
         const pixelGraphics = this.make.graphics({ x: 0, y: 0, add: false });
@@ -35,9 +45,24 @@ export default class BootScene extends Phaser.Scene {
         this.load.audio('turret_fire', 'assets/turrets/pop.mp3');
         this.load.audio('monster_hurt', 'assets/monsters/ow_hurt.mp3');
         this.load.audio('monster_death', 'assets/monsters/ow_death.mp3');
+
+        // Load theme music
+        this.load.audio('theme_music', 'assets/music/theme.mp3');
     }
 
     create() {
+        // Create theme music instance and store in registry for cross-scene access
+        const music = this.sound.add('theme_music', {
+            loop: true,
+            volume: 0.5
+        });
+        this.registry.set('themeMusic', music);
+
+        // Start music if enabled
+        if (this.registry.get('musicEnabled')) {
+            music.play();
+        }
+
         this.scene.start('MenuScene');
     }
 }

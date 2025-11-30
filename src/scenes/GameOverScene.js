@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config.js';
+import AudioControls from '../ui/AudioControls.js';
 
 export default class GameOverScene extends Phaser.Scene {
     constructor() {
@@ -52,5 +53,8 @@ export default class GameOverScene extends Phaser.Scene {
         playAgainBtn.on('pointerdown', () => {
             this.scene.start('MenuScene');
         });
+
+        // Audio controls (bottom right)
+        this.audioControls = new AudioControls(this);
     }
 }

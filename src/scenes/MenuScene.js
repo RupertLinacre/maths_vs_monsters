@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, DIFFICULTY_SETTINGS } from '../config.js';
 import { YEAR_LEVELS } from '../systems/MathsManager.js';
+import AudioControls from '../ui/AudioControls.js';
 
 export default class MenuScene extends Phaser.Scene {
     constructor() {
@@ -163,6 +164,9 @@ export default class MenuScene extends Phaser.Scene {
             fontFamily: 'Arial',
             color: '#2fff00ff'
         }).setOrigin(0.5);
+
+        // Audio controls (bottom right)
+        this.audioControls = new AudioControls(this);
     }
 
     selectYear(index) {

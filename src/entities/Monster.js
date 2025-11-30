@@ -103,11 +103,15 @@ export default class Monster extends Phaser.Physics.Arcade.Sprite {
         this.updateHealthBar();
 
         if (this.health <= 0) {
-            this.scene.sound.play('monster_death');
+            if (this.scene.registry.get('soundEnabled')) {
+                this.scene.sound.play('monster_death');
+            }
             this.destroy();
             return true; // Monster died
         }
-        this.scene.sound.play('monster_hurt');
+        if (this.scene.registry.get('soundEnabled')) {
+            this.scene.sound.play('monster_hurt');
+        }
         return false;
     }
 

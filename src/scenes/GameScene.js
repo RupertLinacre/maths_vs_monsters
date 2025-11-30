@@ -7,6 +7,7 @@ import WaveManager from '../systems/WaveManager.js';
 import MathsManager from '../systems/MathsManager.js';
 import InputBox from '../ui/InputBox.js';
 import HUD from '../ui/HUD.js';
+import AudioControls from '../ui/AudioControls.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -94,6 +95,9 @@ export default class GameScene extends Phaser.Scene {
 
         // Create HUD in the input area (bottom left)
         this.hud = new HUD(this, 10, GAME_AREA_HEIGHT + 10);
+
+        // Audio controls (bottom right of game area)
+        this.audioControls = new AudioControls(this);
     }
 
     createTowerSlots() {
@@ -253,7 +257,9 @@ export default class GameScene extends Phaser.Scene {
 
                 if (tower.canFire()) {
                     tower.fire(this); // Use polymorphic fire method
-                    this.sound.play('turret_fire');
+                    if (this.registry.get('soundEnabled')) {
+                        this.sound.play('turret_fire');
+                    }
                     tower.resetCooldown();
                 }
             }
