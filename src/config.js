@@ -29,7 +29,8 @@ export const TOWER_PROGRESSION = {
 export const COLORS = {
     easy: 0x4ade80,    // Green
     medium: 0xfb923c,  // Orange
-    hard: 0xf87171     // Red
+    hard: 0xf87171,    // Red
+    cluster: 0x9966ff  // Purple
 };
 
 // Monster settings
@@ -39,7 +40,8 @@ export const MONSTER = {
     health: {
         easy: 1,
         medium: 4,
-        hard: 9
+        hard: 9,
+        cluster: 16
     }
 };
 
@@ -118,6 +120,29 @@ export const TOWER_CONFIG = {
             { damage: 6, projectileSpeed: 1050, fireRate: 750 },
             { damage: 6, projectileSpeed: 1050, fireRate: 500 }
         ]
+    },
+    cluster: {
+        classType: 'Cluster', // Maps to ClusterTower class
+        name: 'Cluster',
+        baseStats: {
+            damage: 0,              // Main projectile does no damage
+            fireRate: 2500,         // Slower fire rate
+            projectileSpeed: 250,   // Slower main projectile
+            range: 1000,
+            clusterCount: 5,        // Number of sub-projectiles on explosion
+            clusterDamage: 1,       // Damage per sub-projectile (same as easy turret)
+            clusterSpeed: 300       // Sub-projectile speed (same as easy turret)
+        },
+        projectileConfig: { type: 'cluster' },
+        upgradeDuration: 600000,
+        // Explicit upgrade path: Increase cluster count
+        upgrades: [
+            { clusterCount: 6 },
+            { clusterCount: 7 },
+            { clusterCount: 8 },
+            { clusterCount: 9 },
+            { clusterCount: 10 }
+        ]
     }
 };
 
@@ -158,7 +183,8 @@ export const WAVE = {
 export const POINTS = {
     easy: 10,
     medium: 25,
-    hard: 50
+    hard: 50,
+    cluster: 100
 };
 
 // Game difficulty settings

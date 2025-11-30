@@ -169,7 +169,11 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
             ...this.config.projectileConfig,
             damage: this.stats.damage,
             projectileSpeed: this.stats.projectileSpeed,
-            range: this.stats.range
+            range: this.stats.range,
+            // Include cluster-specific stats if present
+            clusterCount: this.stats.clusterCount,
+            clusterDamage: this.stats.clusterDamage,
+            clusterSpeed: this.stats.clusterSpeed
         };
     }
 

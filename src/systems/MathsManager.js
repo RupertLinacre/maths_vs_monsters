@@ -23,6 +23,7 @@ export default class MathsManager {
         let offset = 0;
         if (difficulty === 'medium') offset = 1;
         if (difficulty === 'hard') offset = 2;
+        if (difficulty === 'cluster') offset = 3;
 
         const yearIndex = Math.min(this.baseYearIndex + offset, YEAR_LEVELS.length - 1);
         return YEAR_LEVELS[yearIndex];

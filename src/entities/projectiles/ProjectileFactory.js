@@ -1,4 +1,5 @@
 import Projectile from './Projectile.js';
+import ClusterProjectile from './ClusterProjectile.js';
 
 /**
  * ProjectileFactory - Creates projectiles based on configuration.
@@ -7,9 +8,9 @@ import Projectile from './Projectile.js';
 export function createProjectile(scene, x, y, config, difficulty, velocityX, velocityY) {
     const type = config.type || 'bullet';
 
-    // For now, all projectiles use the base Projectile class
-    // In the future, we can add different projectile types here
     switch (type) {
+        case 'cluster':
+            return new ClusterProjectile(scene, x, y, config, difficulty, velocityX, velocityY);
         case 'bullet':
         default:
             return new Projectile(scene, x, y, config, difficulty, velocityX, velocityY);

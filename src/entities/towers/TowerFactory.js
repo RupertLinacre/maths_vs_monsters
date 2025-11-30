@@ -2,6 +2,7 @@ import { TOWER_CONFIG } from '../../config.js';
 import StandardTower from './StandardTower.js';
 import SpreadTower from './SpreadTower.js';
 import SniperTower from './SniperTower.js';
+import ClusterTower from './ClusterTower.js';
 
 /**
  * TowerFactory - Creates the appropriate tower subclass based on difficulty.
@@ -12,7 +13,8 @@ import SniperTower from './SniperTower.js';
 const TOWER_CLASSES = {
     'Standard': StandardTower,
     'Spread': SpreadTower,
-    'Sniper': SniperTower
+    'Sniper': SniperTower,
+    'Cluster': ClusterTower
 };
 
 /**

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, DIFFICULTY_SETTINGS } from '../config.js';
 import Monster from '../entities/Monster.js';
 import { createTower } from '../entities/towers/TowerFactory.js';
+import { createProjectile } from '../entities/projectiles/ProjectileFactory.js';
 import TowerSlot from '../entities/TowerSlot.js';
 import WaveManager from '../systems/WaveManager.js';
 import MathsManager from '../systems/MathsManager.js';
@@ -102,15 +103,17 @@ export default class GameScene extends Phaser.Scene {
 
     createTowerSlots() {
         // Assign difficulties to slots in a pattern
-        // Each lane has: easy, medium, hard, easy (or similar pattern)
-        const slotDifficulties = ['easy', 'medium', 'hard', 'easy', 'medium'];
+        // First column uses simpler difficulties, cluster only appears from column 2 onwards
+        const firstColumnDifficulties = ['easy', 'medium', 'hard', 'easy', 'medium'];
+        const laterColumnDifficulties = ['easy', 'medium', 'hard', 'cluster', 'easy', 'medium'];
 
         for (let laneIndex = 0; laneIndex < LANES.length; laneIndex++) {
             for (let slotIndex = 0; slotIndex < TOWER_SLOTS_X.length; slotIndex++) {
                 const x = TOWER_SLOTS_X[slotIndex];
                 const y = LANES[laneIndex];
 
-                // Rotate the difficulty pattern per lane for variety
+                // Use different difficulty patterns for first column vs later columns
+                const slotDifficulties = slotIndex === 0 ? firstColumnDifficulties : laterColumnDifficulties;
                 const difficultyIndex = (slotIndex + laneIndex) % slotDifficulties.length;
                 const difficulty = slotDifficulties[difficultyIndex];
 
@@ -305,6 +308,14 @@ export default class GameScene extends Phaser.Scene {
         // Safety checks
         if (!projectile.active || !monster.active) return;
 
+        // Check if this is a cluster projectile
+        if (projectile.projectileType === 'cluster') {
+            // Spawn cluster explosion with particle burst and sub-projectiles
+            this.spawnClusterExplosion(projectile, monster);
+            projectile.destroy();
+            return;
+        }
+
         // Get damage from projectile (reads from config-based damage)
         const damage = projectile.getDamage();
 
@@ -318,6 +329,96 @@ export default class GameScene extends Phaser.Scene {
 
         // Projectile is destroyed on hit
         projectile.destroy();
+    }
+
+    /**
+     * Spawn cluster explosion effect and sub-projectiles at the monster's position.
+     * @param {ClusterProjectile} clusterProjectile - The cluster projectile that hit
+     * @param {Monster} monster - The monster that was hit
+     */
+    spawnClusterExplosion(clusterProjectile, monster) {
+        const clusterConfig = clusterProjectile.getClusterConfig();
+        const count = clusterConfig.count;
+        const damage = clusterConfig.damage;
+        const speed = clusterConfig.speed;
+
+        // Create particle burst effect
+        this.createClusterParticles(monster.x, monster.y);
+
+        // Spawn sub-projectiles in a radial pattern
+        const angleStep = (Math.PI * 2) / count;
+
+        for (let i = 0; i < count; i++) {
+            const angle = i * angleStep;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+
+            // Create sub-projectile using standard bullet type with cluster damage
+            const subProjectile = createProjectile(
+                this,
+                monster.x,
+                monster.y,
+                {
+                    type: 'bullet',
+                    damage: damage,
+                    projectileSpeed: speed
+                },
+                'easy', // Sub-projectiles are green like easy turret bullets
+                velocityX,
+                velocityY
+            );
+
+            this.projectiles.add(subProjectile);
+        }
+    }
+
+    /**
+     * Create particle burst effect at the cluster explosion location.
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     */
+    createClusterParticles(x, y) {
+        // Create a simple particle burst using graphics
+        const particleCount = 12;
+        const colors = [0x9966ff, 0xbb88ff, 0xddaaff]; // Purple variations
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2;
+            const speed = Phaser.Math.Between(100, 200);
+            const color = Phaser.Utils.Array.GetRandom(colors);
+
+            // Create a small circle as a particle
+            const particle = this.add.circle(x, y, 4, color);
+            particle.setDepth(10);
+
+            // Animate the particle outward and fade
+            this.tweens.add({
+                targets: particle,
+                x: x + Math.cos(angle) * 60,
+                y: y + Math.sin(angle) * 60,
+                alpha: 0,
+                scale: 0.5,
+                duration: 300,
+                ease: 'Power2',
+                onComplete: () => {
+                    particle.destroy();
+                }
+            });
+        }
+
+        // Add a central flash
+        const flash = this.add.circle(x, y, 20, 0xffffff, 0.8);
+        flash.setDepth(9);
+        this.tweens.add({
+            targets: flash,
+            scale: 2,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                flash.destroy();
+            }
+        });
     }
 
     /**
