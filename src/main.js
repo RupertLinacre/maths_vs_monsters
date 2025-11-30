@@ -11,6 +11,10 @@ const config = {
   height: CANVAS_HEIGHT,
   parent: 'game',
   transparent: true,
+  scale: {
+    mode: Phaser.Scale.FIT,          // Scale to fit while maintaining aspect ratio
+    autoCenter: Phaser.Scale.CENTER_BOTH  // Center horizontally and vertically
+  },
   physics: {
     default: 'arcade',
     arcade: {
