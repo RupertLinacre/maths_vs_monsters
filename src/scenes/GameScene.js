@@ -101,6 +101,9 @@ export default class GameScene extends Phaser.Scene {
 
         // Audio controls (bottom right of game area)
         this.audioControls = new AudioControls(this);
+
+        // Track last rotation time for staggered prompt updates
+        this.lastRotationTime = 0;
     }
 
     createTowerSlots() {
@@ -297,6 +300,11 @@ export default class GameScene extends Phaser.Scene {
             questionsAnswered: this.questionsAnswered
         } : null;
         this.hud.update(this.score, this.lives, waveInfo);
+
+        // Check for expired prompts and rotate (staggered, one at a time)
+        if (time > this.lastRotationTime + GAME.rotationCooldown) {
+            this.checkAndRotatePrompts(time);
+        }
     }
 
     gameOver() {
@@ -578,12 +586,7 @@ export default class GameScene extends Phaser.Scene {
 
         console.log('Any correct:', anyCorrect);
         
-        // Show educational feedback for incorrect answers
-        if (!anyCorrect && !feedbackShown && allPrompts.length > 0) {
-            // Show the first prompt's correct answer as educational feedback
-            const firstPrompt = allPrompts[0];
-            this.showFeedback(firstPrompt.correctAnswers[0], false, 0, false);
-        }
+        // No immediate feedback on incorrect answers - let timeout rotation handle it
         
         // Increment questions answered and add bonus points if any were correct
         if (anyCorrect) {
@@ -614,5 +617,66 @@ export default class GameScene extends Phaser.Scene {
         // Always show the correct form as educational feedback
         // Use different colors: green for correct, yellow for incorrect
         this.inputBox.showFeedback(correctForm, wasCorrect);
+    }
+
+    /**
+     * Find the oldest expired prompt and rotate it with educational feedback.
+     * Only rotates ONE prompt at a time with cooldown for learning.
+     * @param {number} time - Current game time from scene.time.now
+     */
+    checkAndRotatePrompts(time) {
+        let oldestExpired = null;
+        let maxAge = -1;
+        const lifetime = GAME.promptLifetime;
+
+        // Helper to check if a prompt has expired
+        const checkCandidate = (candidate) => {
+            if (candidate && candidate.visible && candidate.prompt && candidate.promptSetTime) {
+                const age = time - candidate.promptSetTime;
+                if (age > lifetime && age > maxAge) {
+                    maxAge = age;
+                    oldestExpired = candidate;
+                }
+            }
+        };
+
+        // Check all visible tower slots
+        for (let l = 0; l < LANES.length; l++) {
+            for (let s = 0; s < this.visibleColumns; s++) {
+                checkCandidate(this.towerSlots[l][s]);
+            }
+        }
+
+        // Check all active towers
+        this.towers.children.each(tower => {
+            if (tower.active) {
+                checkCandidate(tower);
+            }
+        });
+
+        // If we found an expired prompt, rotate it
+        if (oldestExpired) {
+            // Show the correct answer as educational feedback (red for timeout)
+            const correctForm = oldestExpired.prompt.correctAnswers[0];
+            this.showFeedback(correctForm, false, 0, false);
+
+            // Generate a new prompt for this slot/tower
+            const newPrompt = this.verbManager.generatePromptForDifficulty(oldestExpired.difficulty);
+            oldestExpired.setPrompt(newPrompt);
+            
+            // Visual feedback - brief flash to show the change
+            if (oldestExpired.problemText) {
+                this.tweens.add({
+                    targets: oldestExpired.problemText,
+                    alpha: 0.3,
+                    duration: 150,
+                    yoyo: true
+                });
+            }
+
+            // Update rotation timer to enforce cooldown
+            this.lastRotationTime = time;
+            console.log('Rotated expired prompt:', correctForm, '→', newPrompt.displayText);
+        }
     }
 }

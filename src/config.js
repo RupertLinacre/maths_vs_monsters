@@ -160,7 +160,9 @@ export const PROJECTILE = {
 
 // Game settings
 export const GAME = {
-    startLives: 10
+    startLives: 10,
+    promptLifetime: 12000,    // 12 seconds before prompt expires and rotates
+    rotationCooldown: 3000    // 3 seconds minimum between rotations (staggered)
 };
 
 // Wave configuration

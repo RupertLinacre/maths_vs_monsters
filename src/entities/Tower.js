@@ -65,6 +65,7 @@ export default class Tower extends Phaser.Physics.Arcade.Sprite {
 
     setPrompt(prompt) {
         this.prompt = prompt;
+        this.promptSetTime = this.scene.time.now; // Track when prompt was set for rotation
         // Use displayText from VerbPrompt (e.g., "hablar (yo, present)")
         this.problemText.setText(prompt.displayText);
     }
