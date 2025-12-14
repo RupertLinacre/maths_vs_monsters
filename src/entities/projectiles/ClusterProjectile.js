@@ -3,10 +3,13 @@ import { PROJECTILE, COLORS, CANVAS_WIDTH, GAME_AREA_HEIGHT } from '../../config
 
 /**
  * ClusterProjectile - A projectile that does no direct damage but explodes
- * into a cluster of sub-projectiles when it hits a monster.
+ * into a cluster of sub-projectiles when it hits a monster OR when it reaches
+ * halfway across the map.
  * The sub-projectile spawning is handled by GameScene's collision handler.
  */
 export default class ClusterProjectile extends Phaser.Physics.Arcade.Sprite {
+    // X position threshold at which cluster auto-explodes (half of map width)
+    static EXPLOSION_THRESHOLD = CANVAS_WIDTH / 2;
     /**
      * @param {Phaser.Scene} scene - The game scene
      * @param {number} x - Starting x position
@@ -91,6 +94,13 @@ export default class ClusterProjectile extends Phaser.Physics.Arcade.Sprite {
         if (!this.active || !this.body) return;
 
         const radius = PROJECTILE.size / 2;
+
+        // Check if projectile has reached halfway across map - auto-explode
+        if (this.x >= ClusterProjectile.EXPLOSION_THRESHOLD) {
+            // Emit event for GameScene to handle the explosion
+            this.scene.events.emit('clusterAutoExplode', this);
+            return; // Scene will destroy this projectile
+        }
 
         // Manual top/bottom boundary bouncing (within game area only)
         if (this.y - radius <= 0) {

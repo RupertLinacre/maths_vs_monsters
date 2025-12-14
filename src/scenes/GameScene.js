@@ -96,6 +96,9 @@ export default class GameScene extends Phaser.Scene {
         // Listen for answer submissions
         this.events.on('answerSubmitted', this.handleAnswerSubmit, this);
 
+        // Listen for cluster projectile auto-explosion (at halfway across map)
+        this.events.on('clusterAutoExplode', this.handleClusterAutoExplode, this);
+
         // Create HUD in the input area (bottom left)
         this.hud = new HUD(this, 10, GAME_AREA_HEIGHT + 10);
 
@@ -379,6 +382,55 @@ export default class GameScene extends Phaser.Scene {
 
             this.projectiles.add(subProjectile);
         }
+    }
+
+    /**
+     * Handle cluster projectile auto-explosion when it reaches halfway across the map.
+     * @param {ClusterProjectile} clusterProjectile - The cluster projectile that triggered auto-explosion
+     */
+    handleClusterAutoExplode(clusterProjectile) {
+        if (!clusterProjectile.active) return;
+
+        const clusterConfig = clusterProjectile.getClusterConfig();
+        const count = clusterConfig.count;
+        const damage = clusterConfig.damage;
+        const speed = clusterConfig.speed;
+
+        // Use the projectile's current position for explosion
+        const explosionX = clusterProjectile.x;
+        const explosionY = clusterProjectile.y;
+
+        // Create particle burst effect at projectile position
+        this.createClusterParticles(explosionX, explosionY);
+
+        // Spawn sub-projectiles in a radial pattern
+        const angleStep = (Math.PI * 2) / count;
+
+        for (let i = 0; i < count; i++) {
+            const angle = i * angleStep;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+
+            // Create sub-projectile using standard bullet type with cluster damage
+            const subProjectile = createProjectile(
+                this,
+                explosionX,
+                explosionY,
+                {
+                    type: 'bullet',
+                    damage: damage,
+                    projectileSpeed: speed
+                },
+                'easy', // Sub-projectiles are green like easy turret bullets
+                velocityX,
+                velocityY
+            );
+
+            this.projectiles.add(subProjectile);
+        }
+
+        // Destroy the cluster projectile
+        clusterProjectile.destroy();
     }
 
     /**
