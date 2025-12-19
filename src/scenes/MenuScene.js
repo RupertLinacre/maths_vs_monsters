@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, DIFFICULTY_SETTINGS } from '../config.js';
-import { YEAR_LEVELS } from '../systems/MathsManager.js';
+import { YEAR_LEVELS, PROBLEM_TYPE_OPTIONS } from '../systems/MathsManager.js';
 import AudioControls from '../ui/AudioControls.js';
 
 export default class MenuScene extends Phaser.Scene {
@@ -31,7 +31,7 @@ export default class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Year level label
-        this.add.text(CANVAS_WIDTH / 2, 250, 'Select Year Level:', {
+        this.add.text(CANVAS_WIDTH / 2, 210, 'Select Year Level:', {
             fontSize: '20px',
             fontFamily: 'Arial',
             color: '#ffffff'
@@ -53,7 +53,7 @@ export default class MenuScene extends Phaser.Scene {
 
         yearLabels.forEach((label, index) => {
             const x = startX + index * (buttonWidth + buttonSpacing);
-            const y = 310;
+            const y = 260;
 
             const btn = this.add.text(x, y, label, {
                 fontSize: '14px',
@@ -86,7 +86,7 @@ export default class MenuScene extends Phaser.Scene {
         });
 
         // Difficulty label
-        this.add.text(CANVAS_WIDTH / 2, 370, 'Select Difficulty:', {
+        this.add.text(CANVAS_WIDTH / 2, 320, 'Select Difficulty:', {
             fontSize: '20px',
             fontFamily: 'Arial',
             color: '#ffffff'
@@ -102,7 +102,7 @@ export default class MenuScene extends Phaser.Scene {
         difficultyKeys.forEach((key, index) => {
             const setting = DIFFICULTY_SETTINGS[key];
             const x = diffStartX + index * (diffButtonWidth + diffButtonSpacing);
-            const y = 420;
+            const y = 360;
 
             const isSelected = key === this.selectedDifficultyKey;
             const btn = this.add.text(x, y, setting.label, {
@@ -135,8 +135,66 @@ export default class MenuScene extends Phaser.Scene {
             this.difficultyButtons.push(btn);
         });
 
+        // Problem type label
+        this.add.text(CANVAS_WIDTH / 2, 420, 'Select Problem Type:', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        // Create problem type buttons
+        this.selectedProblemType = 'all';
+        this.problemTypeButtons = [];
+
+        const typeButtonWidth = 120;
+        const typeButtonSpacing = 10;
+        const typeButtonsPerRow = 5;
+        const typeRowSpacing = 40;
+
+        PROBLEM_TYPE_OPTIONS.forEach((option, index) => {
+            const row = Math.floor(index / typeButtonsPerRow);
+            const col = index % typeButtonsPerRow;
+            const remaining = PROBLEM_TYPE_OPTIONS.length - row * typeButtonsPerRow;
+            const rowCount = Math.min(typeButtonsPerRow, remaining);
+            const rowWidth = rowCount * typeButtonWidth + (rowCount - 1) * typeButtonSpacing;
+            const rowStartX = (CANVAS_WIDTH - rowWidth) / 2 + typeButtonWidth / 2;
+
+            const x = rowStartX + col * (typeButtonWidth + typeButtonSpacing);
+            const y = 460 + row * typeRowSpacing;
+
+            const isSelected = option.key === this.selectedProblemType;
+            const btn = this.add.text(x, y, option.label, {
+                fontSize: '14px',
+                fontFamily: 'Arial',
+                color: isSelected ? '#1a1a2e' : '#ffffff',
+                backgroundColor: isSelected ? '#60a5fa' : '#333355',
+                padding: { x: 10, y: 8 }
+            }).setOrigin(0.5)
+                .setInteractive({ useHandCursor: true });
+
+            btn.problemTypeKey = option.key;
+
+            btn.on('pointerover', () => {
+                if (option.key !== this.selectedProblemType) {
+                    btn.setStyle({ backgroundColor: '#444466' });
+                }
+            });
+
+            btn.on('pointerout', () => {
+                if (option.key !== this.selectedProblemType) {
+                    btn.setStyle({ backgroundColor: '#333355' });
+                }
+            });
+
+            btn.on('pointerdown', () => {
+                this.selectProblemType(option.key);
+            });
+
+            this.problemTypeButtons.push(btn);
+        });
+
         // Start Game button
-        const startBtn = this.add.text(CANVAS_WIDTH / 2, 510, 'START GAME', {
+        const startBtn = this.add.text(CANVAS_WIDTH / 2, 560, 'START GAME', {
             fontSize: '28px',
             fontFamily: 'Arial',
             color: '#ffffff',
@@ -158,7 +216,7 @@ export default class MenuScene extends Phaser.Scene {
         });
 
         // Instructions
-        this.add.text(CANVAS_WIDTH / 2, 600,
+        this.add.text(CANVAS_WIDTH / 2, 620,
             'Answer maths questions to activate towers.  Answer more questions to powerup towers', {
             fontSize: '14px',
             fontFamily: 'Arial',
@@ -207,12 +265,33 @@ export default class MenuScene extends Phaser.Scene {
         });
     }
 
+    selectProblemType(key) {
+        this.selectedProblemType = key;
+
+        this.problemTypeButtons.forEach((btn) => {
+            if (btn.problemTypeKey === key) {
+                btn.setStyle({
+                    color: '#1a1a2e',
+                    backgroundColor: '#60a5fa'
+                });
+            } else {
+                btn.setStyle({
+                    color: '#ffffff',
+                    backgroundColor: '#333355'
+                });
+            }
+        });
+    }
+
     startGame() {
         // Store selected year level in registry
         this.registry.set('baseYearLevel', YEAR_LEVELS[this.selectedYearIndex]);
 
         // Store selected difficulty in registry
         this.registry.set('gameDifficulty', this.selectedDifficultyKey);
+
+        // Store selected problem type in registry
+        this.registry.set('problemType', this.selectedProblemType);
 
         // Start game scene
         this.scene.start('GameScene');

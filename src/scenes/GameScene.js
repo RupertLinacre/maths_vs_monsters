@@ -36,12 +36,15 @@ export default class GameScene extends Phaser.Scene {
         // Get selected year level from registry
         const baseYearLevel = this.registry.get('baseYearLevel') || 'year1';
 
+        // Get selected problem type from registry
+        const problemType = this.registry.get('problemType') || 'all';
+
         // Get selected difficulty from registry
         const difficultyKey = this.registry.get('gameDifficulty') || 'medium';
         this.difficultySettings = DIFFICULTY_SETTINGS[difficultyKey];
 
-        // Create maths manager with selected year level
-        this.mathsManager = new MathsManager(baseYearLevel);
+        // Create maths manager with selected year level and problem type
+        this.mathsManager = new MathsManager(baseYearLevel, problemType);
 
         // Draw lane grid
         this.drawLaneGrid();

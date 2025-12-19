@@ -11,14 +11,14 @@
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
-    "vite": "npm:rolldown-vite@7.2.5",
-    "gh-pages": "^6.2.0"
+    "gh-pages": "^6.2.0",
+    "vite": "npm:rolldown-vite@7.2.5"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
   },
   "dependencies": {
-    "maths-game-problem-generator": "^0.0.1",
+    "maths-game-problem-generator": "1.0.2",
     "phaser": "^3.90.0"
   }
 }

@@ -5,9 +5,20 @@ const YEAR_LEVELS = [
     'reception', 'year1', 'year2', 'year3', 'year4', 'year5', 'year6'
 ];
 
+const PROBLEM_TYPE_OPTIONS = [
+    { key: 'all', label: 'All' },
+    { key: 'addition', label: 'Addition' },
+    { key: 'subtraction', label: 'Subtraction' },
+    { key: 'multiplication', label: 'Multiplication' },
+    { key: 'division', label: 'Division' }
+];
+
+const PROBLEM_TYPE_KEYS = PROBLEM_TYPE_OPTIONS.map((option) => option.key);
+
 export default class MathsManager {
-    constructor(baseYearLevel = 'year1') {
+    constructor(baseYearLevel = 'year1', problemType = 'all') {
         this.setBaseYearLevel(baseYearLevel);
+        this.setProblemType(problemType);
     }
 
     setBaseYearLevel(yearLevel) {
@@ -16,6 +27,14 @@ export default class MathsManager {
         if (this.baseYearIndex === -1) {
             this.baseYearIndex = 1; // Default to year1
             this.baseYearLevel = 'year1';
+        }
+    }
+
+    setProblemType(problemType) {
+        if (PROBLEM_TYPE_KEYS.includes(problemType)) {
+            this.problemType = problemType;
+        } else {
+            this.problemType = 'all';
         }
     }
 
@@ -34,13 +53,25 @@ export default class MathsManager {
 
     generateProblemForDifficulty(difficulty) {
         const yearLevel = this.getYearLevelForDifficulty(difficulty);
+        const useType = this.problemType && this.problemType !== 'all';
 
         try {
             const problem = generateProblem({
-                yearLevel: yearLevel
+                yearLevel: yearLevel,
+                ...(useType ? { type: this.problemType } : {})
             });
             return problem;
         } catch (e) {
+            if (useType) {
+                try {
+                    const fallbackProblem = generateProblem({ yearLevel: yearLevel });
+                    return fallbackProblem;
+                } catch (fallbackError) {
+                    console.warn('Problem generation failed, using fallback', fallbackError);
+                    return this.generateFallbackProblem(difficulty);
+                }
+            }
+
             // Fallback if library fails
             console.warn('Problem generation failed, using fallback', e);
             return this.generateFallbackProblem(difficulty);
@@ -96,4 +127,4 @@ export default class MathsManager {
 }
 
 // Export year levels for menu
-export { YEAR_LEVELS };
+export { YEAR_LEVELS, PROBLEM_TYPE_OPTIONS };
