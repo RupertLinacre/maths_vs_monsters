@@ -72,7 +72,18 @@ export const TOWER_CONFIG = {
             { fireRate: 500 },  // Level 3 (1/4)
             { fireRate: 400 },   // Level 4
             { fireRate: 300 },   // Level 5
-            { fireRate: 200 }   // Level 6
+            { fireRate: 250 },   // Level 6
+            { fireRate: 200 },   // Level 6
+            { fireRate: 150 },   // Level 6
+            { fireRate: 125 },   // Level 6
+            { fireRate: 100 },   // Level 6
+            { fireRate: 75 },   // Level 6
+            { fireRate: 66 },   // Level 6
+            { fireRate: 50 },   // Level 6
+            { fireRate: 20 },   // Level 6
+            { fireRate: 10 },   // Level 6
+            { fireRate: 5 },   // Level 6
+
 
         ]
     },
@@ -99,6 +110,11 @@ export const TOWER_CONFIG = {
             { projectileCount: 8 },
             { projectileCount: 9 },
             { projectileCount: 10 },
+            { projectileCount: 12 },
+            { projectileCount: 14 },
+            { projectileCount: 16 },
+            { projectileCount: 18 },
+            { projectileCount: 20 },
 
         ]
     },
@@ -118,7 +134,12 @@ export const TOWER_CONFIG = {
             { damage: 4, projectileSpeed: 750, fireRate: 1500 },
             { damage: 5, projectileSpeed: 900, fireRate: 1000 },
             { damage: 6, projectileSpeed: 1050, fireRate: 750 },
-            { damage: 6, projectileSpeed: 1050, fireRate: 500 }
+            { damage: 6, projectileSpeed: 1050, fireRate: 500 },
+            { damage: 6, projectileSpeed: 1150, fireRate: 400 },
+            { damage: 6, projectileSpeed: 1250, fireRate: 300 },
+            { damage: 6, projectileSpeed: 1350, fireRate: 250 },
+            { damage: 6, projectileSpeed: 1450, fireRate: 200 },
+            { damage: 6, projectileSpeed: 2000, fireRate: 150 },
         ]
     },
     cluster: {
@@ -141,7 +162,15 @@ export const TOWER_CONFIG = {
             { clusterCount: 12 },
             { clusterCount: 15 },
             { clusterCount: 18 },
-            { clusterCount: 21 }
+            { clusterCount: 21 },
+            { clusterCount: 25 },
+            { clusterCount: 30 },
+            { clusterCount: 35 },
+            { clusterCount: 45 },
+            { clusterCount: 60 },
+            { clusterCount: 75 },
+            { clusterCount: 90 },
+            { clusterCount: 100 },
         ]
     }
 };
