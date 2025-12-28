@@ -213,7 +213,27 @@ export const POINTS = {
     easy: 10,
     medium: 25,
     hard: 50,
-    cluster: 100
+    cluster: 100,
+    wrong: 75  // Bonus points for killing a wrong-answer monster
+};
+
+// Wrong answer monster configuration
+export const WRONG_MONSTER = {
+    size: 40,
+    // Escalation: each entry defines what happens for consecutive wrong answers
+    // delay is in ms between spawns, angles in degrees from horizontal
+    // speedMultiplier is multiplied by base monster speed and game difficulty multiplier
+    // health is the total health of wrong monsters spawned at this level
+    escalation: [
+        // 1st wrong answer: 1 monster at 45 degrees, 2x speed, 3 health
+        { count: 1, angles: [45], delays: [0], speedMultiplier: 3.0, health: 3 },
+        // 2nd wrong answer: 2 monsters, opposite angles, 1s delay between, 4x speed, 4 health
+        { count: 2, angles: [45, -45], delays: [0, 1000], speedMultiplier: 4.0, health: 4 },
+        // 3rd wrong answer: 3 monsters at different angles, 4x speed, 5 health
+        { count: 3, angles: [30, 0, -30], delays: [0, 500, 1000], speedMultiplier: 5.0, health: 5 },
+
+
+    ]
 };
 
 // Game difficulty settings

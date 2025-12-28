@@ -35,6 +35,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('monster_easy', 'assets/monsters/monster_easy.png');
         this.load.image('monster_medium', 'assets/monsters/monster_medium.png');
         this.load.image('monster_hard', 'assets/monsters/monster_hard.png');
+        this.load.image('monster_wrong', 'assets/monsters/monster_wrong.png');
 
         // Load turret sprites (note: easy has typo 'turrent' in filename)
         this.load.image('turret_easy', 'assets/turrets/turrent_easy.png');

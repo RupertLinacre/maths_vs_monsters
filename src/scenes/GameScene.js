@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, DIFFICULTY_SETTINGS } from '../config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GAME_AREA_HEIGHT, INPUT_AREA_HEIGHT, LANES, TOWER_SLOTS_X, COLORS, TOWER, GAME, POINTS, TOWER_PROGRESSION, DIFFICULTY_SETTINGS, WRONG_MONSTER } from '../config.js';
 import Monster from '../entities/Monster.js';
+import WrongMonster from '../entities/WrongMonster.js';
 import { createTower } from '../entities/towers/TowerFactory.js';
 import { createProjectile } from '../entities/projectiles/ProjectileFactory.js';
 import TowerSlot from '../entities/TowerSlot.js';
@@ -21,6 +22,7 @@ export default class GameScene extends Phaser.Scene {
         this.score = 0;
         this.totalMonstersKilled = 0;
         this.questionsAnswered = 0;
+        this.totalWrongAnswers = 0;  // Track wrong answers per wave (resets each wave)
 
         // Track visible tower columns (starts with 1 column)
         this.visibleColumns = 1;
@@ -164,6 +166,9 @@ export default class GameScene extends Phaser.Scene {
             this.visibleColumns = newVisibleColumns;
         }
 
+        // Reset wrong answer counter at the start of each wave
+        this.totalWrongAnswers = 0;
+
         // Reset all towers to tower slots at the start of each wave
         this.resetAllTowers();
     }
@@ -284,8 +289,10 @@ export default class GameScene extends Phaser.Scene {
             if (monster && monster.active && monster.x < 0) {
                 this.lives--;
                 monster.destroy();
-                // Notify wave manager that a monster was killed (escaped counts as killed for wave tracking)
-                this.waveManager.onMonsterKilled();
+                // Notify wave manager only for regular monsters (wrong monsters are not part of wave count)
+                if (monster.difficulty !== 'wrong') {
+                    this.waveManager.onMonsterKilled();
+                }
 
                 // Check for game over
                 if (this.lives <= 0) {
@@ -338,8 +345,10 @@ export default class GameScene extends Phaser.Scene {
         if (died) {
             this.score += POINTS[monster.difficulty];
             this.totalMonstersKilled++;
-            // Notify wave manager that a monster was killed
-            this.waveManager.onMonsterKilled();
+            // Only notify wave manager for regular monsters (wrong monsters don't count toward wave)
+            if (monster.difficulty !== 'wrong') {
+                this.waveManager.onMonsterKilled();
+            }
         }
 
         // Projectile is destroyed on hit
@@ -521,7 +530,15 @@ export default class GameScene extends Phaser.Scene {
 
     handleAnswerSubmit(answer) {
         console.log('Answer submitted:', answer);
+
+        // Don't process empty answers
+        if (answer === null || answer === undefined || answer === '' || String(answer).trim() === '') {
+            console.log('Empty answer, ignoring');
+            return;
+        }
+
         let anyCorrect = false;
+        let anyQuestionsDisplayed = false;
 
         // First, check answer against tower slots (to spawn new towers)
         // Only check visible columns
@@ -530,6 +547,7 @@ export default class GameScene extends Phaser.Scene {
                 const towerSlot = this.towerSlots[laneIndex][slotIndex];
 
                 if (towerSlot && towerSlot.problem) {
+                    anyQuestionsDisplayed = true;
                     const isCorrect = this.mathsManager.checkAnswer(towerSlot.problem, answer);
 
                     if (isCorrect) {
@@ -576,6 +594,7 @@ export default class GameScene extends Phaser.Scene {
         for (const tower of towers) {
             try {
                 if (tower.problem) {
+                    anyQuestionsDisplayed = true;
                     console.log('Checking tower problem:', tower.problem.expression, 'answer:', tower.problem.answer);
                     const isCorrect = this.mathsManager.checkAnswer(tower.problem, answer);
                     console.log('Is correct:', isCorrect);
@@ -612,12 +631,80 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
-        console.log('Any correct:', anyCorrect);
+        console.log('Any correct:', anyCorrect, 'Any questions displayed:', anyQuestionsDisplayed);
         // Increment questions answered if any were correct
         if (anyCorrect) {
             this.questionsAnswered++;
+            // Note: we do NOT reset wrong answer count - it accumulates globally
+        } else if (anyQuestionsDisplayed) {
+            // Only spawn wrong monsters if there were questions to answer
+            // and the answer didn't match ANY of them
+            this.handleWrongAnswer();
         }
         // Flash input box
         this.inputBox.flash(anyCorrect);
+    }
+
+    /**
+     * Handle a wrong answer by spawning wrong monsters with escalation.
+     * Wrong answers per wave determine the escalation level.
+     */
+    handleWrongAnswer() {
+        this.totalWrongAnswers++;
+
+        // Get escalation config (clamp to max level)
+        const escalationIndex = Math.min(
+            this.totalWrongAnswers - 1,
+            WRONG_MONSTER.escalation.length - 1
+        );
+        const escalation = WRONG_MONSTER.escalation[escalationIndex];
+
+        console.log(`Wrong answer #${this.totalWrongAnswers}: Spawning ${escalation.count} wrong monsters at ${escalation.speedMultiplier}x speed`);
+
+        // Spawn monsters with configured delays
+        for (let i = 0; i < escalation.count; i++) {
+            const angle = escalation.angles[i];
+            const delay = escalation.delays[i];
+            const speedMultiplier = escalation.speedMultiplier;
+            const health = escalation.health;
+
+            if (delay === 0) {
+                this.spawnWrongMonster(angle, speedMultiplier, health);
+            } else {
+                this.time.delayedCall(delay, () => {
+                    this.spawnWrongMonster(angle, speedMultiplier, health);
+                });
+            }
+        }
+    }
+
+    /**
+     * Spawn a wrong monster at a random Y position moving at the specified angle.
+     * @param {number} angleDegrees - The angle of movement (0 = straight left, positive = downward)
+     * @param {number} wrongSpeedMultiplier - The speed multiplier specific to this wrong monster type
+     * @param {number} health - The health of this wrong monster
+     */
+    spawnWrongMonster(angleDegrees, wrongSpeedMultiplier = 2.0, health = 3) {
+        // Pick a random Y position within game area, avoiding edges
+        const margin = 60;  // Keep away from top/bottom initially
+        const y = Phaser.Math.Between(margin, GAME_AREA_HEIGHT - margin);
+
+        // Spawn from right edge
+        const x = CANVAS_WIDTH + 20;
+
+        // Create wrong monster with game difficulty speed multiplier, wrong monster speed multiplier, and health
+        const wrongMonster = new WrongMonster(
+            this,
+            x,
+            y,
+            angleDegrees,
+            this.difficultySettings.speedMultiplier,
+            wrongSpeedMultiplier,
+            health
+        );
+
+        this.monsters.add(wrongMonster);
+
+        console.log(`Wrong monster spawned at y=${y} with angle ${angleDegrees}°`);
     }
 }
