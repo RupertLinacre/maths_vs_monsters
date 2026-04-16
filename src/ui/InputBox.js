@@ -8,6 +8,7 @@ export default class InputBox extends Phaser.GameObjects.Container {
         this.scene = scene;
         this.currentValue = '';
         this.maxLength = 10;
+        this.isEnabled = true;
 
         // Add to scene
         scene.add.existing(this);
@@ -73,6 +74,7 @@ export default class InputBox extends Phaser.GameObjects.Container {
             border: 'none',
             outline: 'none',
             caretColor: 'transparent',  // Hide the caret too
+            pointerEvents: 'auto',
             zIndex: '1000',
             opacity: '0',  // Completely invisible
             // Will be sized to match canvas in updateInputPosition
@@ -112,6 +114,17 @@ export default class InputBox extends Phaser.GameObjects.Container {
 
         // Handle enter key submission
         this.htmlInput.addEventListener('keydown', (e) => {
+            if (!this.isEnabled) {
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.scene.events.emit('togglePauseRequested');
+                return;
+            }
+
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.submit();
@@ -162,6 +175,10 @@ export default class InputBox extends Phaser.GameObjects.Container {
     setupKeyboardInput() {
         // Desktop keyboard input still works via Phaser for backwards compatibility
         this.scene.input.keyboard.on('keydown', (event) => {
+            if (!this.isEnabled) {
+                return;
+            }
+
             // Prevent event from bubbling to prevent page scrolling etc
             event.stopPropagation();
 
@@ -210,6 +227,12 @@ export default class InputBox extends Phaser.GameObjects.Container {
                 this.submit();
                 return;
             }
+
+            // Handle escape for pause toggle
+            if (event.keyCode === 27) {
+                this.scene.events.emit('togglePauseRequested');
+                return;
+            }
         });
     }
 
@@ -227,6 +250,10 @@ export default class InputBox extends Phaser.GameObjects.Container {
     }
 
     submit() {
+        if (!this.isEnabled) {
+            return;
+        }
+
         if (this.currentValue.length > 0) {
             // Emit event with the value
             this.scene.events.emit('answerSubmitted', this.currentValue);
@@ -253,6 +280,23 @@ export default class InputBox extends Phaser.GameObjects.Container {
         this.currentValue = '';
         this.syncToHtmlInput();
         this.updateDisplay();
+    }
+
+    setEnabled(enabled) {
+        this.isEnabled = enabled;
+
+        if (this.htmlInput) {
+            this.htmlInput.disabled = !enabled;
+            this.htmlInput.style.pointerEvents = enabled ? 'auto' : 'none';
+            if (!enabled) {
+                this.htmlInput.blur();
+            }
+        }
+
+        this.background.setAlpha(enabled ? 1 : 0.6);
+        this.textDisplay.setAlpha(enabled ? 1 : 0.6);
+        this.hint.setAlpha(enabled ? 1 : 0.6);
+        this.cursor.setVisible(enabled);
     }
 
     destroy() {

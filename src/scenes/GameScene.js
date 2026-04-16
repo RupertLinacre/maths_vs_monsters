@@ -14,9 +14,12 @@ import AudioControls from '../ui/AudioControls.js';
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this.isPaused = false;
     }
 
     create() {
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
+
         // Initialize game state
         this.lives = GAME.startLives;
         this.score = 0;
@@ -101,14 +104,75 @@ export default class GameScene extends Phaser.Scene {
         // Listen for answer submissions
         this.events.on('answerSubmitted', this.handleAnswerSubmit, this);
 
+        // Allow pause toggling from both Phaser keyboard input and the HTML input overlay
+        this.events.on('togglePauseRequested', this.togglePause, this);
+        this.input.keyboard.on('keydown-ESC', this.togglePause, this);
+
         // Listen for cluster projectile auto-explosion (at halfway across map)
         this.events.on('clusterAutoExplode', this.handleClusterAutoExplode, this);
 
         // Create HUD in the input area (bottom left)
         this.hud = new HUD(this, 10, GAME_AREA_HEIGHT + 10);
 
+        this.createPauseButton();
+
         // Audio controls (bottom right of game area)
         this.audioControls = new AudioControls(this);
+    }
+
+    createPauseButton() {
+        this.pauseButton = this.add.text(CANVAS_WIDTH - 220, CANVAS_HEIGHT - 30, '⏸ Pause', {
+            fontSize: '14px',
+            fontFamily: 'Arial',
+            color: '#ffcc66',
+            backgroundColor: '#222233',
+            padding: { x: 8, y: 6 }
+        }).setOrigin(1, 0.5)
+            .setDepth(150)
+            .setInteractive({ useHandCursor: true });
+
+        this.pauseButton.on('pointerover', () => {
+            this.pauseButton.setStyle({ backgroundColor: '#333344' });
+        });
+
+        this.pauseButton.on('pointerout', () => {
+            this.pauseButton.setStyle({ backgroundColor: '#222233' });
+        });
+
+        this.pauseButton.on('pointerdown', () => {
+            this.pauseGameplay();
+        });
+    }
+
+    togglePause() {
+        if (this.isPaused) {
+            return;
+        }
+
+        this.pauseGameplay();
+    }
+
+    pauseGameplay() {
+        if (this.isPaused) {
+            return;
+        }
+
+        this.isPaused = true;
+
+        if (this.inputBox) {
+            this.inputBox.setEnabled(false);
+        }
+
+        this.scene.launch('PauseScene', { parentSceneKey: this.scene.key });
+        this.scene.pause();
+    }
+
+    resumeGameplay() {
+        this.isPaused = false;
+
+        if (this.inputBox) {
+            this.inputBox.setEnabled(true);
+        }
     }
 
     createTowerSlots() {
@@ -316,6 +380,10 @@ export default class GameScene extends Phaser.Scene {
         // Store final score
         this.registry.set('finalScore', this.score);
 
+        if (this.scene.isActive('PauseScene')) {
+            this.scene.stop('PauseScene');
+        }
+
         // Clean up
         if (this.waveManager) {
             this.waveManager.destroy();
@@ -323,6 +391,15 @@ export default class GameScene extends Phaser.Scene {
 
         // Transition to game over scene
         this.scene.start('GameOverScene');
+    }
+
+    handleShutdown() {
+        this.events.off('answerSubmitted', this.handleAnswerSubmit, this);
+        this.events.off('togglePauseRequested', this.togglePause, this);
+
+        if (this.input && this.input.keyboard) {
+            this.input.keyboard.off('keydown-ESC', this.togglePause, this);
+        }
     }
 
     handleProjectileMonsterCollision(projectile, monster) {

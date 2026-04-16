@@ -3,6 +3,7 @@ import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
+import PauseScene from './scenes/PauseScene.js';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 
 const config = {
@@ -21,7 +22,7 @@ const config = {
       debug: false  // Enable to visualize physics bodies
     }
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene]
+  scene: [BootScene, MenuScene, GameScene, PauseScene, GameOverScene]
 };
 
 const game = new Phaser.Game(config);
